@@ -1,0 +1,245 @@
+[
+  {
+    "slug": "",
+    "wp_slug": "home",
+    "parent": null,
+    "title": "Visit Caaguazú — Donde la madera cuenta historias",
+    "desc": "181 años tallando una identidad. 90 aserraderos. 5.000 carpinterías. Una ciudad donde cada mueble tiene nombre y cada juguete tiene familia.",
+    "file": "home.html",
+    "is_home": true
+  },
+  {
+    "slug": "mapaciudad",
+    "wp_slug": "mapaciudad",
+    "parent": null,
+    "title": "Mapa de Caaguazú — Capital de la Madera",
+    "desc": "Mapa interactivo de Caaguazú: ubicaciones de patrimonio, centro histórico, mercado y puntos culturales.",
+    "file": "mapaciudad.html",
+    "is_home": false
+  },
+  {
+    "slug": "que-hacer",
+    "wp_slug": "que-hacer",
+    "parent": null,
+    "title": "Qué hacer en Caaguazú — Atractivos y experiencias",
+    "desc": "Ykua La Patria, la Ruta de la Madera, el parque Techapyrã, la Iglesia Inmaculada Concepción y el Mercado de Abasto.",
+    "file": "que-hacer.html",
+    "is_home": false
+  },
+  {
+    "slug": "que-hacer/mercado-municipal",
+    "wp_slug": "mercado-municipal",
+    "parent": "que-hacer",
+    "title": "Mercado de Abasto — Vida local en Caaguazú",
+    "desc": "El mercado central: productos frescos, comida típica, hierbas medicinales y poha ñana.",
+    "file": "que-hacer__mercado-municipal.html",
+    "is_home": false
+  },
+  {
+    "slug": "que-hacer/parques-y-naturaleza",
+    "wp_slug": "parques-y-naturaleza",
+    "parent": "que-hacer",
+    "title": "Parques y naturaleza — Caaguazú",
+    "desc": "Parque Techapyrã, único en el país con dinosaurios a escala real, y espacios verdes para familias.",
+    "file": "que-hacer__parques-y-naturaleza.html",
+    "is_home": false
+  },
+  {
+    "slug": "que-hacer/patrimonio-religioso",
+    "wp_slug": "patrimonio-religioso",
+    "parent": "que-hacer",
+    "title": "Patrimonio religioso — Iglesia Inmaculada Concepción",
+    "desc": "Templo principal de Caaguazú: 60 m² de murales de Jorge Aguirre e iluminación monumental nocturna.",
+    "file": "que-hacer__patrimonio-religioso.html",
+    "is_home": false
+  },
+  {
+    "slug": "que-hacer/ykua-la-patria",
+    "wp_slug": "ykua-la-patria",
+    "parent": "que-hacer",
+    "title": "Ykua La Patria — El manantial fundacional de Caaguazú",
+    "desc": "Sitio histórico y parque urbano donde nació la ciudad en 1845. Aguas que saciaron a los soldados de la Triple Alianza.",
+    "file": "que-hacer__ykua-la-patria.html",
+    "is_home": false
+  },
+  {
+    "slug": "vivir-caaguazu",
+    "wp_slug": "vivir-caaguazu",
+    "parent": null,
+    "title": "Vivir Caaguazú — Cultura, festividades y vida cotidiana",
+    "desc": "El guaraní en la calle, las fiestas patronales, las plazas. Cómo se vive Caaguazú cuando nadie está mirando.",
+    "file": "vivir-caaguazu.html",
+    "is_home": false
+  },
+  {
+    "slug": "vivir-caaguazu/festividades",
+    "wp_slug": "festividades",
+    "parent": "vivir-caaguazu",
+    "title": "Festividades y calendario — Caaguazú",
+    "desc": "Fiesta Patronal del 8 de diciembre, aniversario fundacional del 8 de mayo, peñas y tereré en la plaza.",
+    "file": "vivir-caaguazu__festividades.html",
+    "is_home": false
+  },
+  {
+    "slug": "vivir-caaguazu/galeria",
+    "wp_slug": "galeria",
+    "parent": "vivir-caaguazu",
+    "title": "Galería — Caaguazú en imágenes",
+    "desc": "Fotografías de la Capital de la Madera: oficios, paisaje, fiestas, gente.",
+    "file": "vivir-caaguazu__galeria.html",
+    "is_home": false
+  },
+  {
+    "slug": "vivir-caaguazu/guarani-en-nuestra-ciudad",
+    "wp_slug": "guarani-en-nuestra-ciudad",
+    "parent": "vivir-caaguazu",
+    "title": "Guaraní en nuestra ciudad — Glosario caaguaceño",
+    "desc": "Términos guaraní que vas a escuchar en Caaguazú: significado, pronunciación, contexto.",
+    "file": "vivir-caaguazu__guarani-en-nuestra-ciudad.html",
+    "is_home": false
+  },
+  {
+    "slug": "contacto",
+    "wp_slug": "contacto",
+    "parent": null,
+    "title": "Contacto — Turismo Caaguazú",
+    "desc": "Contactá a la Secretaría de Turismo de la Municipalidad de Caaguazú.",
+    "file": "contacto.html",
+    "is_home": false
+  },
+  {
+    "slug": "planifica-tu-visita",
+    "wp_slug": "planifica-tu-visita",
+    "parent": null,
+    "title": "Planificá tu visita — Caaguazú",
+    "desc": "Cómo llegar, dónde alojarte, mejor época del año y mapa interactivo para visitar Caaguazú.",
+    "file": "planifica-tu-visita.html",
+    "is_home": false
+  },
+  {
+    "slug": "planifica-tu-visita/donde-alojarte",
+    "wp_slug": "donde-alojarte",
+    "parent": "planifica-tu-visita",
+    "title": "Dónde alojarte en Caaguazú",
+    "desc": "Hoteles, hospedajes y opciones para todos los presupuestos en Caaguazú y alrededores.",
+    "file": "planifica-tu-visita__donde-alojarte.html",
+    "is_home": false
+  },
+  {
+    "slug": "planifica-tu-visita/mejor-epoca",
+    "wp_slug": "mejor-epoca",
+    "parent": "planifica-tu-visita",
+    "title": "Mejor época para visitar Caaguazú",
+    "desc": "Clima subtropical, estaciones marcadas y los meses ideales para disfrutar Caaguazú.",
+    "file": "planifica-tu-visita__mejor-epoca.html",
+    "is_home": false
+  },
+  {
+    "slug": "planifica-tu-visita/como-llegar",
+    "wp_slug": "como-llegar",
+    "parent": "planifica-tu-visita",
+    "title": "Cómo llegar a Caaguazú",
+    "desc": "En auto o en bus desde Asunción y Ciudad del Este, sobre la Ruta 7.",
+    "file": "planifica-tu-visita__como-llegar.html",
+    "is_home": false
+  },
+  {
+    "slug": "planifica-tu-visita/mapa-interactivo",
+    "wp_slug": "mapa-interactivo",
+    "parent": "planifica-tu-visita",
+    "title": "Mapa de Caaguazú",
+    "desc": "Mapa interactivo de la ciudad: atracciones, hoteles y servicios.",
+    "file": "planifica-tu-visita__mapa-interactivo.html",
+    "is_home": false
+  },
+  {
+    "slug": "sabores-de-caaguazu",
+    "wp_slug": "sabores-de-caaguazu",
+    "parent": null,
+    "title": "Sabores de Caaguazú — Cocina típica paraguaya",
+    "desc": "Ryguasu chyryry, sopa paraguaya, chipa guasu, mbeju, y la cultura del mate y tereré.",
+    "file": "sabores-de-caaguazu.html",
+    "is_home": false
+  },
+  {
+    "slug": "sabores-de-caaguazu/platos-tipicos",
+    "wp_slug": "platos-tipicos",
+    "parent": "sabores-de-caaguazu",
+    "title": "Platos típicos de Caaguazú",
+    "desc": "Ryguasu chyryry, sopa paraguaya, chipa guasu, mbeju, vori vori: los platos imprescindibles.",
+    "file": "sabores-de-caaguazu__platos-tipicos.html",
+    "is_home": false
+  },
+  {
+    "slug": "sabores-de-caaguazu/donde-comer",
+    "wp_slug": "donde-comer",
+    "parent": "sabores-de-caaguazu",
+    "title": "Dónde comer en Caaguazú",
+    "desc": "Lista de locales recomendados — desde puestos del mercado hasta restaurantes familiares.",
+    "file": "sabores-de-caaguazu__donde-comer.html",
+    "is_home": false
+  },
+  {
+    "slug": "sabores-de-caaguazu/mate-y-terere",
+    "wp_slug": "mate-y-terere",
+    "parent": "sabores-de-caaguazu",
+    "title": "Mate y tereré — La cultura de la ronda en Caaguazú",
+    "desc": "Tereré al mediodía, mate al amanecer. La ronda es el ritual social más persistente del Paraguay.",
+    "file": "sabores-de-caaguazu__mate-y-terere.html",
+    "is_home": false
+  },
+  {
+    "slug": "la-capital-de-la-madera",
+    "wp_slug": "la-capital-de-la-madera",
+    "parent": null,
+    "title": "La Capital de la Madera — Caaguazú",
+    "desc": "Cómo una ciudad se talló a sí misma durante 181 años. Historia, oficio, artesanos y especies madereras.",
+    "file": "la-capital-de-la-madera.html",
+    "is_home": false
+  },
+  {
+    "slug": "la-capital-de-la-madera/la-ruta-de-la-madera",
+    "wp_slug": "la-ruta-de-la-madera",
+    "parent": "la-capital-de-la-madera",
+    "title": "La Ruta de la Madera — Caaguazú",
+    "desc": "Sobre la Ruta 7, kilómetros de talleres abiertos donde la madera se trabaja, se exhibe y se vende en vivo.",
+    "file": "la-capital-de-la-madera__la-ruta-de-la-madera.html",
+    "is_home": false
+  },
+  {
+    "slug": "la-capital-de-la-madera/artesania-y-oficios",
+    "wp_slug": "artesania-y-oficios",
+    "parent": "la-capital-de-la-madera",
+    "title": "Artesanía y oficios — Caaguazú",
+    "desc": "Carpinteros, parqueteros, talladores, jugueteros: los oficios de la madera que sostienen a 10.000 familias caaguaceñas.",
+    "file": "la-capital-de-la-madera__artesania-y-oficios.html",
+    "is_home": false
+  },
+  {
+    "slug": "la-capital-de-la-madera/artesanos",
+    "wp_slug": "artesanos",
+    "parent": "la-capital-de-la-madera",
+    "title": "Artesanos de Caaguazú — Los rostros de la madera",
+    "desc": "Perfiles de los carpinteros, parqueteros y talladores que sostienen 181 años de oficio maderero.",
+    "file": "la-capital-de-la-madera__artesanos.html",
+    "is_home": false
+  },
+  {
+    "slug": "la-capital-de-la-madera/historia",
+    "wp_slug": "historia",
+    "parent": "la-capital-de-la-madera",
+    "title": "Historia de Caaguazú — 1845 hasta hoy",
+    "desc": "Desde la Merced Real de 1706 hasta los 98.200 habitantes de hoy: 181 años de fundación, guerra, oficio y resiliencia.",
+    "file": "la-capital-de-la-madera__historia.html",
+    "is_home": false
+  },
+  {
+    "slug": "intro",
+    "wp_slug": "intro",
+    "parent": null,
+    "title": "Caaguazú — Donde la madera cuenta historias",
+    "desc": "Intro cinematográfica al portal de turismo de la Capital de la Madera del Paraguay.",
+    "file": "intro.html",
+    "is_home": false
+  }
+]
