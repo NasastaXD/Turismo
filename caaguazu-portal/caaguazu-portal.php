@@ -81,8 +81,9 @@ function promotur_boot() {
 		PROMOTUR_Admin::instance();
 	}
 
-	// Auto re-flush de rewrite rules si cambió la versión (upgrades sin re-activar).
+	// Auto re-sync al cambiar la versión (los hooks de activación NO corren en un update de plugin).
 	if ( get_option( 'promotur_version' ) !== PROMOTUR_VERSION ) {
+		PROMOTUR_Roles::install();        // re-otorga caps nuevas (p.ej. promotur_manage_users) al admin.
 		PROMOTUR_Router::add_rewrite_rules();
 		flush_rewrite_rules();
 		update_option( 'promotur_version', PROMOTUR_VERSION );
