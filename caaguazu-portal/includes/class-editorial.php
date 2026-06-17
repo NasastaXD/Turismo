@@ -61,6 +61,14 @@ class PROMOTUR_Editorial {
 		if ( 'publicado' === $estado ) {
 			update_post_meta( $post_id, '_promotur_verificado_en', current_time( 'mysql' ) );
 		}
+		// Auditoría del ciclo editorial (log de posts).
+		if ( class_exists( 'PROMOTUR_Audit' ) && in_array( $estado, array( 'enviado', 'publicado', 'necesita_cambios', 'aprobado' ), true ) ) {
+			PROMOTUR_Audit::log( 'destino_' . $estado, array(
+				'entity_type' => 'destino',
+				'entity_id'   => (int) $post_id,
+				'payload'     => array( 'title' => get_the_title( $post_id ) ),
+			) );
+		}
 	}
 
 	/**

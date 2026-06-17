@@ -93,6 +93,9 @@ class PROMOTUR_Ajax {
 			if ( ! get_post_meta( $post_id, '_promotur_estado', true ) ) {
 				update_post_meta( $post_id, '_promotur_estado', 'borrador' );
 			}
+			if ( class_exists( 'PROMOTUR_Audit' ) ) {
+				PROMOTUR_Audit::log( 'destino_created', array( 'entity_type' => 'destino', 'entity_id' => (int) $post_id, 'payload' => array( 'title' => $title ) ) );
+			}
 		}
 
 		// Guardar metadatos del modelo.

@@ -20,5 +20,10 @@ delete_option( 'promotur_destacados' );
 delete_option( 'promotur_banner' );
 delete_option( 'promotur_empty_searches' );
 
+// Tablas custom (invitaciones y auditoría).
+global $wpdb;
+$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}promotur_invitations" ); // phpcs:ignore WordPress.DB
+$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}promotur_audit_log" );    // phpcs:ignore WordPress.DB
+
 // Limpia las marcas de lectura de notificaciones.
 delete_metadata( 'user', 0, 'promotur_notifs_read_at', '', true );

@@ -3,7 +3,7 @@
  * Plugin Name:       Caaguazú Portal — Promotores Turísticos
  * Plugin URI:        https://turismo.caaguazu.net
  * Description:       Panel autenticado tipo app (sidebar + topbar + contenido, instalable como PWA) sobre rutas propias, con flujo editorial borrador → revisión → publicación para el Portal de Promotores Turísticos. Hereda los colores del sitio vía tokens CSS.
- * Version:           1.0.0
+ * Version:           1.1.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Municipalidad de Caaguazú
@@ -16,8 +16,8 @@
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'PROMOTUR_VERSION', '1.0.0' );
-define( 'PROMOTUR_DB_VERSION', 1 ); // se incrementa cuando cambia la estructura de datos.
+define( 'PROMOTUR_VERSION', '1.1.0' );
+define( 'PROMOTUR_DB_VERSION', 2 ); // se incrementa cuando cambia la estructura de datos.
 define( 'PROMOTUR_FILE', __FILE__ );
 define( 'PROMOTUR_DIR', plugin_dir_path( __FILE__ ) );
 define( 'PROMOTUR_URI', plugin_dir_url( __FILE__ ) );
@@ -33,7 +33,10 @@ require_once PROMOTUR_DIR . 'includes/class-router.php';
 require_once PROMOTUR_DIR . 'includes/class-shell.php';
 require_once PROMOTUR_DIR . 'includes/class-assets.php';
 require_once PROMOTUR_DIR . 'includes/class-pwa.php';
+require_once PROMOTUR_DIR . 'includes/class-invitations.php';
+require_once PROMOTUR_DIR . 'includes/class-audit.php';
 require_once PROMOTUR_DIR . 'includes/class-auth.php';
+require_once PROMOTUR_DIR . 'includes/class-admin.php';
 require_once PROMOTUR_DIR . 'includes/class-notifications.php';
 require_once PROMOTUR_DIR . 'includes/class-destinos.php';
 require_once PROMOTUR_DIR . 'includes/class-editorial.php';
@@ -73,6 +76,10 @@ function promotur_boot() {
 	PROMOTUR_Stats::instance();
 	PROMOTUR_Gestion_Ajax::instance();
 	PROMOTUR_I18n::instance();
+	PROMOTUR_Audit::instance();
+	if ( is_admin() ) {
+		PROMOTUR_Admin::instance();
+	}
 
 	// Auto re-flush de rewrite rules si cambió la versión (upgrades sin re-activar).
 	if ( get_option( 'promotur_version' ) !== PROMOTUR_VERSION ) {
@@ -94,17 +101,41 @@ function promotur_load_textdomain() {
 add_action( 'init', 'promotur_load_textdomain' );
 
 /**
- * Auto-updater desde GitHub Releases (plugin-update-checker vendoreado).
- * Descarga el asset caaguazu-portal.zip adjunto al release más reciente.
+ * Token de GitHub para el auto-updater (repos privados / límite de rate más alto).
+ * La constante PROMOTUR_GITHUB_TOKEN (wp-config.php) tiene prioridad sobre la opción
+ * editable desde wp-admin → Portal Turismo → Actualizaciones.
+ *
+ * @return string Token, o cadena vacía si no hay ninguno configurado.
  */
-function promotur_init_updater() {
+function promotur_github_token() {
+	if ( defined( 'PROMOTUR_GITHUB_TOKEN' ) && PROMOTUR_GITHUB_TOKEN ) {
+		return (string) PROMOTUR_GITHUB_TOKEN;
+	}
+	return (string) get_option( 'promotur_github_token', '' );
+}
+
+/**
+ * Accesor a la instancia del auto-updater (plugin-update-checker).
+ * La página de Actualizaciones la usa para consultar versión/estado y forzar comprobaciones.
+ *
+ * @return \YahnisElsts\PluginUpdateChecker\v5p6\Plugin\UpdateChecker|null
+ */
+function promotur_updater() {
+	static $updater = null;
+	static $built   = false;
+
+	if ( $built ) {
+		return $updater;
+	}
+	$built = true;
+
 	$loader = PROMOTUR_DIR . 'vendor/plugin-update-checker/plugin-update-checker.php';
 	if ( ! file_exists( $loader ) ) {
-		return;
+		return null;
 	}
 	require_once $loader;
 	if ( ! class_exists( '\YahnisElsts\PluginUpdateChecker\v5\PucFactory' ) ) {
-		return;
+		return null;
 	}
 
 	$updater = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
@@ -119,10 +150,20 @@ function promotur_init_updater() {
 		$api->enableReleaseAssets( '/caaguazu-portal\.zip$/i' );
 	}
 
-	// Repos privados: definir PROMOTUR_GITHUB_TOKEN en wp-config.php.
-	if ( defined( 'PROMOTUR_GITHUB_TOKEN' ) && PROMOTUR_GITHUB_TOKEN ) {
-		$updater->setAuthentication( PROMOTUR_GITHUB_TOKEN );
+	$token = promotur_github_token();
+	if ( $token ) {
+		$updater->setAuthentication( $token );
 	}
+
+	return $updater;
+}
+
+/**
+ * Auto-updater desde GitHub Releases (plugin-update-checker vendoreado).
+ * Descarga el asset caaguazu-portal.zip adjunto al release más reciente.
+ */
+function promotur_init_updater() {
+	promotur_updater();
 }
 
 /**
@@ -132,9 +173,10 @@ function promotur_init_updater() {
  * @param int $from versión de DB instalada actualmente
  */
 function promotur_run_migrations( $from ) {
-	// Las migraciones futuras se agregan acá en orden:
-	// if ( $from < 2 ) { /* … cambios de la v2 … */ }
-	// if ( $from < 3 ) { /* … cambios de la v3 … */ }
+	// v2: tablas de invitaciones y auditoría (invite-only + logs).
+	if ( $from < 2 ) {
+		PROMOTUR_Install::create_tables();
+	}
 	do_action( 'promotur_run_migrations', $from );
 }
 

@@ -47,7 +47,7 @@ $body = function () use ( $error, $notice, $next, $reset ) {
 
 	<div class="promotur-auth__links">
 		<a href="<?php echo esc_url( promotur_url( 'recuperar' ) ); ?>"><?php esc_html_e( '¿Olvidaste tu contraseña?', 'caaguazu-portal' ); ?></a>
-		<a href="<?php echo esc_url( promotur_url( 'registro' ) ); ?>"><?php esc_html_e( 'Crear cuenta', 'caaguazu-portal' ); ?></a>
+<span class="promotur-muted"><?php esc_html_e( 'Acceso solo por invitación', 'caaguazu-portal' ); ?></span>
 	</div>
 	<?php
 };

@@ -1,34 +1,49 @@
 <?php
 /**
- * Registro (con token de invitación opcional). Recibe: $error, $notice, $next, $token.
+ * Registro INVITE-ONLY. Recibe: $error, $next, $token, $invite_status, $invite_role.
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-$error  = isset( $error ) ? $error : '';
-$next   = isset( $next ) ? $next : '';
-$token  = isset( $token ) ? $token : '';
-$invite = PROMOTUR_Auth::instance()->get_invite( $token );
-$role_label = $invite ? PROMOTUR_Roles::label( $invite['role'] ) : '';
+$error         = isset( $error ) ? $error : '';
+$next          = isset( $next ) ? $next : '';
+$token         = isset( $token ) ? $token : '';
+$invite_status = isset( $invite_status ) ? $invite_status : 'invalid';
+$invite_role   = isset( $invite_role ) ? $invite_role : '';
+$is_valid      = ( 'valid' === $invite_status );
 
 $page_title = __( 'Crear cuenta', 'caaguazu-portal' );
-$body = function () use ( $error, $next, $token, $invite, $role_label ) {
+$body = function () use ( $error, $next, $token, $invite_status, $invite_role, $is_valid ) {
 	?>
 	<h1 class="promotur-auth__title"><?php esc_html_e( 'Crear cuenta', 'caaguazu-portal' ); ?></h1>
-
-	<?php if ( $invite ) : ?>
-		<div class="promotur-notice promotur-notice--success">
-			<?php
-			/* translators: %s = rol */
-			printf( esc_html__( 'Invitación válida: te unirás como %s.', 'caaguazu-portal' ), '<strong>' . esc_html( $role_label ) . '</strong>' );
-			?>
-		</div>
-	<?php else : ?>
-		<p class="promotur-auth__sub"><?php esc_html_e( 'Creá tu cuenta de visitante. Las cuentas de Mini Promotor se obtienen por invitación del equipo.', 'caaguazu-portal' ); ?></p>
-	<?php endif; ?>
 
 	<?php if ( $error ) : ?>
 		<div class="promotur-notice promotur-notice--error"><?php echo esc_html( $error ); ?></div>
 	<?php endif; ?>
+
+	<?php if ( ! $is_valid ) : ?>
+		<div class="promotur-notice promotur-notice--info">
+			<?php
+			switch ( $invite_status ) {
+				case 'used':    esc_html_e( 'Esa invitación ya fue usada.', 'caaguazu-portal' ); break;
+				case 'expired': esc_html_e( 'Esa invitación expiró. Pedí una nueva al equipo.', 'caaguazu-portal' ); break;
+				case 'revoked': esc_html_e( 'Esa invitación fue revocada.', 'caaguazu-portal' ); break;
+				default:        esc_html_e( 'El registro es solo por invitación. Pedí tu enlace al equipo de Turismo.', 'caaguazu-portal' );
+			}
+			?>
+		</div>
+		<div class="promotur-auth__links">
+			<a href="<?php echo esc_url( promotur_url( 'login' ) ); ?>"><?php esc_html_e( 'Ya tengo cuenta', 'caaguazu-portal' ); ?></a>
+		</div>
+		<?php
+		return;
+	endif; ?>
+
+	<div class="promotur-notice promotur-notice--success">
+		<?php
+		/* translators: %s = rol */
+		printf( esc_html__( 'Invitación válida: te unirás como %s.', 'caaguazu-portal' ), '<strong>' . esc_html( $invite_role ) . '</strong>' );
+		?>
+	</div>
 
 	<form class="promotur-form" method="post">
 		<?php wp_nonce_field( 'promotur_registro', 'promotur_nonce' ); ?>
@@ -43,6 +58,10 @@ $body = function () use ( $error, $next, $token, $invite, $role_label ) {
 		<label class="promotur-field">
 			<span><?php esc_html_e( 'Email', 'caaguazu-portal' ); ?></span>
 			<input type="email" name="email" autocomplete="email" required>
+		</label>
+		<label class="promotur-field">
+			<span><?php esc_html_e( 'Teléfono', 'caaguazu-portal' ); ?></span>
+			<input type="tel" name="phone" autocomplete="tel" inputmode="tel" required placeholder="<?php esc_attr_e( 'Ej: 0981 123 456', 'caaguazu-portal' ); ?>">
 		</label>
 		<label class="promotur-field">
 			<span><?php esc_html_e( 'Contraseña (6+ caracteres)', 'caaguazu-portal' ); ?></span>

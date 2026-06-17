@@ -41,6 +41,8 @@ $page_title = isset( $page_title ) ? $page_title : get_bloginfo( 'name' );
 		</main>
 	</div>
 
+	<?php include __DIR__ . '/partials/bottomnav.php'; ?>
+
 <?php wp_footer(); ?>
 </body>
 </html>
