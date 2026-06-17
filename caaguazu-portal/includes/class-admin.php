@@ -18,19 +18,31 @@ class PROMOTUR_Admin {
 		return self::$instance;
 	}
 
+	/** Capability para la página de Actualizaciones (la tienen los administradores). */
+	const CAP_UPDATES = 'update_plugins';
+
 	private function __construct() {
 		add_action( 'admin_menu', array( $this, 'menu' ) );
 		add_action( 'admin_post_promotur_admin_users', array( $this, 'handle_users' ) );
 		add_action( 'admin_post_promotur_admin_invites', array( $this, 'handle_invites' ) );
+		add_action( 'admin_post_promotur_admin_updates', array( $this, 'handle_updates' ) );
 	}
 
 	/* ----- Menú ----- */
 	public function menu() {
-		if ( ! current_user_can( self::CAP ) ) { return; }
-		add_menu_page( __( 'Portal Turismo', 'caaguazu-portal' ), __( 'Portal Turismo', 'caaguazu-portal' ), self::CAP, 'promotur', array( $this, 'render_users' ), 'dashicons-palmtree', 57 );
-		add_submenu_page( 'promotur', __( 'Usuarios', 'caaguazu-portal' ), __( 'Usuarios', 'caaguazu-portal' ), self::CAP, 'promotur', array( $this, 'render_users' ) );
-		add_submenu_page( 'promotur', __( 'Invitaciones', 'caaguazu-portal' ), __( 'Invitaciones', 'caaguazu-portal' ), self::CAP, 'promotur-invites', array( $this, 'render_invites' ) );
-		add_submenu_page( 'promotur', __( 'Logs', 'caaguazu-portal' ), __( 'Logs', 'caaguazu-portal' ), self::CAP, 'promotur-logs', array( $this, 'render_logs' ) );
+		if ( ! current_user_can( self::CAP ) && ! current_user_can( self::CAP_UPDATES ) ) { return; }
+
+		// El menú padre y su slug por defecto se gatean por la capability que tenga el rol.
+		$parent_cap = current_user_can( self::CAP ) ? self::CAP : self::CAP_UPDATES;
+		$parent_cb  = current_user_can( self::CAP ) ? array( $this, 'render_users' ) : array( $this, 'render_updates' );
+		add_menu_page( __( 'Portal Turismo', 'caaguazu-portal' ), __( 'Portal Turismo', 'caaguazu-portal' ), $parent_cap, 'promotur', $parent_cb, 'dashicons-palmtree', 57 );
+
+		if ( current_user_can( self::CAP ) ) {
+			add_submenu_page( 'promotur', __( 'Usuarios', 'caaguazu-portal' ), __( 'Usuarios', 'caaguazu-portal' ), self::CAP, 'promotur', array( $this, 'render_users' ) );
+			add_submenu_page( 'promotur', __( 'Invitaciones', 'caaguazu-portal' ), __( 'Invitaciones', 'caaguazu-portal' ), self::CAP, 'promotur-invites', array( $this, 'render_invites' ) );
+			add_submenu_page( 'promotur', __( 'Logs', 'caaguazu-portal' ), __( 'Logs', 'caaguazu-portal' ), self::CAP, 'promotur-logs', array( $this, 'render_logs' ) );
+		}
+		add_submenu_page( 'promotur', __( 'Actualizaciones', 'caaguazu-portal' ), __( 'Actualizaciones', 'caaguazu-portal' ), self::CAP_UPDATES, 'promotur-updates', array( $this, 'render_updates' ) );
 	}
 
 	private function notice( $msg, $type = 'success' ) {
@@ -331,5 +343,173 @@ class PROMOTUR_Admin {
 			<?php endif; ?>
 		</div>
 		<?php
+	}
+
+	/* ================= ACTUALIZACIONES ================= */
+	private function guard_updates() {
+		if ( ! current_user_can( self::CAP_UPDATES ) ) {
+			wp_die( esc_html__( 'No autorizado.', 'caaguazu-portal' ) );
+		}
+	}
+
+	public function render_updates() {
+		$this->guard_updates();
+
+		$updater = function_exists( 'promotur_updater' ) ? promotur_updater() : null;
+
+		// Versión instalada (header del plugin) y datos del plugin.
+		if ( ! function_exists( 'get_plugin_data' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
+		$data      = get_plugin_data( PROMOTUR_FILE, false, false );
+		$installed = $data['Version'] ? $data['Version'] : ( defined( 'PROMOTUR_VERSION' ) ? PROMOTUR_VERSION : '0' );
+
+		// Última versión disponible (caché del updater) y última comprobación.
+		$update      = $updater ? $updater->getUpdate() : null;
+		$last_check  = 0;
+		if ( $updater && method_exists( $updater, 'getUpdateState' ) ) {
+			$state      = $updater->getUpdateState();
+			$last_check = $state ? (int) $state->getLastCheck() : 0;
+		}
+
+		// Estado del token.
+		$token_const = defined( 'PROMOTUR_GITHUB_TOKEN' ) && PROMOTUR_GITHUB_TOKEN;
+		$token_opt   = (string) get_option( 'promotur_github_token', '' );
+		?>
+		<div class="wrap">
+			<h1><?php esc_html_e( 'Actualizaciones del portal', 'caaguazu-portal' ); ?></h1>
+			<?php $this->show_notice(); ?>
+
+			<?php if ( ! $updater ) : ?>
+				<div class="notice notice-error"><p><?php esc_html_e( 'No se pudo inicializar el verificador de actualizaciones (plugin-update-checker). Revisá que la carpeta vendor/ esté presente.', 'caaguazu-portal' ); ?></p></div>
+			<?php endif; ?>
+
+			<?php if ( defined( 'PROMOTUR_VERSION' ) && version_compare( $installed, PROMOTUR_VERSION, '!=' ) ) : ?>
+				<div class="notice notice-warning"><p>
+					<?php printf(
+						/* translators: 1: header version, 2: constant version */
+						esc_html__( 'Atención: la versión del encabezado del plugin (%1$s) no coincide con la constante PROMOTUR_VERSION (%2$s). El workflow de releases y el updater usan la del encabezado; mantenelas iguales para evitar problemas de publicación.', 'caaguazu-portal' ),
+						esc_html( $installed ),
+						esc_html( PROMOTUR_VERSION )
+					); ?>
+				</p></div>
+			<?php endif; ?>
+
+			<table class="widefat striped" style="max-width:680px">
+				<tbody>
+					<tr><th style="width:200px"><?php esc_html_e( 'Versión instalada', 'caaguazu-portal' ); ?></th><td><code><?php echo esc_html( $installed ); ?></code></td></tr>
+					<tr><th><?php esc_html_e( 'Última disponible', 'caaguazu-portal' ); ?></th><td>
+						<?php if ( $update && ! empty( $update->version ) ) : ?>
+							<code><?php echo esc_html( $update->version ); ?></code>
+							<?php
+							$link = wp_nonce_url(
+								self_admin_url( 'update.php?action=upgrade-plugin&plugin=' . rawurlencode( PROMOTUR_BASENAME ) ),
+								'upgrade-plugin_' . PROMOTUR_BASENAME
+							);
+							?>
+							&nbsp;<a class="button button-primary" href="<?php echo esc_url( $link ); ?>"><?php esc_html_e( 'Actualizar ahora', 'caaguazu-portal' ); ?></a>
+						<?php else : ?>
+							<?php esc_html_e( 'Estás al día.', 'caaguazu-portal' ); ?>
+						<?php endif; ?>
+					</td></tr>
+					<tr><th><?php esc_html_e( 'Última comprobación', 'caaguazu-portal' ); ?></th><td>
+						<?php echo $last_check ? esc_html( date_i18n( 'Y-m-d H:i', $last_check ) ) : esc_html__( 'nunca', 'caaguazu-portal' ); ?>
+					</td></tr>
+					<tr><th><?php esc_html_e( 'Repositorio', 'caaguazu-portal' ); ?></th><td><a href="<?php echo esc_url( PROMOTUR_REPO ); ?>" target="_blank" rel="noopener"><?php echo esc_html( PROMOTUR_REPO ); ?></a></td></tr>
+				</tbody>
+			</table>
+
+			<p>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline">
+					<?php wp_nonce_field( 'promotur_admin_updates' ); ?>
+					<input type="hidden" name="action" value="promotur_admin_updates">
+					<input type="hidden" name="op" value="check">
+					<button class="button"><?php esc_html_e( 'Buscar actualizaciones ahora', 'caaguazu-portal' ); ?></button>
+				</form>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline">
+					<?php wp_nonce_field( 'promotur_admin_updates' ); ?>
+					<input type="hidden" name="action" value="promotur_admin_updates">
+					<input type="hidden" name="op" value="reset">
+					<button class="button"><?php esc_html_e( 'Limpiar caché del updater', 'caaguazu-portal' ); ?></button>
+				</form>
+			</p>
+
+			<h2><?php esc_html_e( 'Token de GitHub', 'caaguazu-portal' ); ?></h2>
+			<?php if ( $token_const ) : ?>
+				<p><?php esc_html_e( 'Definido en wp-config.php mediante la constante PROMOTUR_GITHUB_TOKEN (no editable acá). Tiene prioridad sobre el token guardado en la base de datos.', 'caaguazu-portal' ); ?></p>
+			<?php else : ?>
+				<p class="description"><?php esc_html_e( 'El repositorio es público, así que normalmente no hace falta token. Configurá uno solo si el repo pasa a privado o si chocás con el límite de peticiones de GitHub.', 'caaguazu-portal' ); ?></p>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+					<?php wp_nonce_field( 'promotur_admin_updates' ); ?>
+					<input type="hidden" name="action" value="promotur_admin_updates">
+					<input type="hidden" name="op" value="save_token">
+					<table class="form-table"><tbody>
+						<tr><th><?php esc_html_e( 'Token', 'caaguazu-portal' ); ?></th><td>
+							<input type="password" name="github_token" class="regular-text" autocomplete="off" placeholder="<?php echo $token_opt ? esc_attr__( '•••• guardado (dejá vacío para conservarlo)', 'caaguazu-portal' ) : 'ghp_…'; ?>">
+							<?php if ( $token_opt ) : ?>
+								<p><label><input type="checkbox" name="clear_token" value="1"> <?php esc_html_e( 'Eliminar el token guardado', 'caaguazu-portal' ); ?></label></p>
+							<?php endif; ?>
+						</td></tr>
+					</tbody></table>
+					<p><button class="button button-primary"><?php esc_html_e( 'Guardar token', 'caaguazu-portal' ); ?></button></p>
+				</form>
+			<?php endif; ?>
+		</div>
+		<?php
+	}
+
+	public function handle_updates() {
+		$this->guard_updates();
+		check_admin_referer( 'promotur_admin_updates' );
+		$op      = sanitize_key( wp_unslash( $_POST['op'] ?? '' ) );
+		$updater = function_exists( 'promotur_updater' ) ? promotur_updater() : null;
+
+		switch ( $op ) {
+			case 'check':
+				if ( $updater ) {
+					$update = $updater->checkForUpdates();
+					delete_site_transient( 'update_plugins' );
+					if ( $update && ! empty( $update->version ) ) {
+						$this->notice( sprintf( __( 'Hay una versión nueva disponible: %s.', 'caaguazu-portal' ), '<code>' . esc_html( $update->version ) . '</code>' ) );
+					} else {
+						$this->notice( __( 'No hay actualizaciones: estás en la última versión.', 'caaguazu-portal' ) );
+					}
+				} else {
+					$this->notice( __( 'El verificador de actualizaciones no está disponible.', 'caaguazu-portal' ), 'error' );
+				}
+				break;
+
+			case 'reset':
+				if ( $updater && method_exists( $updater, 'resetUpdateState' ) ) {
+					$updater->resetUpdateState();
+				}
+				delete_site_transient( 'update_plugins' );
+				$this->notice( __( 'Caché del updater limpiada.', 'caaguazu-portal' ) );
+				break;
+
+			case 'save_token':
+				if ( defined( 'PROMOTUR_GITHUB_TOKEN' ) && PROMOTUR_GITHUB_TOKEN ) {
+					$this->notice( __( 'El token está fijado en wp-config.php; no se puede cambiar desde acá.', 'caaguazu-portal' ), 'error' );
+					break;
+				}
+				$clear = ! empty( $_POST['clear_token'] );
+				$token = sanitize_text_field( wp_unslash( $_POST['github_token'] ?? '' ) );
+				if ( $clear ) {
+					delete_option( 'promotur_github_token' );
+					$this->notice( __( 'Token eliminado.', 'caaguazu-portal' ) );
+				} elseif ( '' !== $token ) {
+					update_option( 'promotur_github_token', $token, false );
+					$this->notice( __( 'Token guardado.', 'caaguazu-portal' ) );
+				} else {
+					$this->notice( __( 'Sin cambios en el token.', 'caaguazu-portal' ) );
+				}
+				if ( class_exists( 'PROMOTUR_Audit' ) ) {
+					PROMOTUR_Audit::log( 'update_settings', array( 'entity_type' => 'plugin' ) );
+				}
+				break;
+		}
+
+		wp_safe_redirect( admin_url( 'admin.php?page=promotur-updates' ) );
+		exit;
 	}
 }
