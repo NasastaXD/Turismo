@@ -129,6 +129,7 @@ function promotur_icon( $name ) {
 		'sun'     => '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/>',
 		'install' => '<path d="M12 3v12"/><path d="m8 11 4 4 4-4"/><path d="M4 21h16"/>',
 		'menu'    => '<path d="M4 6h16M4 12h16M4 18h16"/>',
+		'help'    => '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 .9-1 1.7"/><path d="M12 17h.01"/>',
 	);
 	$d = isset( $paths[ $name ] ) ? $paths[ $name ] : $paths['doc'];
 	return '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $d . '</svg>';
@@ -155,8 +156,20 @@ function promotur_nav_items() {
 		array( 'route' => 'panel/biblioteca',     'label' => __( 'Biblioteca', 'caaguazu-portal' ),     'icon' => 'image',  'cap' => 'promotur_manage_media' ),
 		array( 'route' => 'panel/estructura',     'label' => __( 'Estructura', 'caaguazu-portal' ),     'icon' => 'layout', 'cap' => 'promotur_manage_structure' ),
 		array( 'route' => 'panel/perfil',         'label' => __( 'Mi perfil', 'caaguazu-portal' ),      'icon' => 'user',   'cap' => 'promotur_edit_profile' ),
+		array( 'route' => 'panel/ayuda',          'label' => __( 'Ayuda', 'caaguazu-portal' ),          'icon' => 'help',   'cap' => 'promotur_view_panel' ),
 	);
 	return apply_filters( 'promotur_nav_items', $items );
+}
+
+/**
+ * Teléfono del usuario (meta _promotur_phone).
+ *
+ * @param int|null $user_id
+ * @return string
+ */
+function promotur_user_phone( $user_id = null ) {
+	$user_id = $user_id ? $user_id : get_current_user_id();
+	return $user_id ? (string) get_user_meta( $user_id, '_promotur_phone', true ) : '';
 }
 
 /**

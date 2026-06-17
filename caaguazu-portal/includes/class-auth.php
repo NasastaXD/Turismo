@@ -10,8 +10,6 @@ class PROMOTUR_Auth {
 
 	private static $instance = null;
 
-	const INVITES_OPTION = 'promotur_invites';
-
 	public static function instance() {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
@@ -21,21 +19,31 @@ class PROMOTUR_Auth {
 
 	private function __construct() {
 		add_action( 'admin_post_promotur_invite', array( $this, 'handle_create_invite' ) );
+		// Invite-only: bloquear suspendidos y desactivar el alta nativa de WordPress.
+		add_filter( 'authenticate', array( $this, 'block_suspended' ), 30 );
+		add_filter( 'option_users_can_register', '__return_zero' );
 	}
 
 	/**
-	 * admin-post: genera un link de invitación (desde el panel de equipo).
+	 * Bloquea el login de usuarios suspendidos (filtro authenticate).
+	 */
+	public function block_suspended( $user ) {
+		if ( $user instanceof WP_User && get_user_meta( $user->ID, '_promotur_suspended', true ) ) {
+			return new WP_Error( 'promotur_suspended', __( 'Tu cuenta está suspendida. Contactá al equipo.', 'caaguazu-portal' ) );
+		}
+		return $user;
+	}
+
+	/**
+	 * admin-post: genera un link de invitación (desde el panel de equipo del Promotor).
 	 */
 	public function handle_create_invite() {
 		if ( ! current_user_can( 'promotur_manage_team' ) || ! check_admin_referer( 'promotur_invite' ) ) {
 			wp_die( esc_html__( 'No autorizado.', 'caaguazu-portal' ) );
 		}
 		$role = isset( $_POST['role'] ) ? sanitize_key( wp_unslash( $_POST['role'] ) ) : 'promotur_mini';
-		if ( ! array_key_exists( $role, PROMOTUR_Roles::roles() ) ) {
-			$role = 'promotur_mini';
-		}
-		$token = self::create_invite( $role, 14 );
-		$link  = promotur_url( 'i/' . $token );
+		$tokens = PROMOTUR_Invitations::create( array( 'role' => $role, 'expires_days' => 14, 'count' => 1 ) );
+		$link   = PROMOTUR_Invitations::registration_url( $tokens[0] );
 		/* translators: %s = enlace de invitación */
 		promotur_flash( sprintf( __( 'Enlace de invitación creado (válido 14 días): %s', 'caaguazu-portal' ), $link ), 'success' );
 		wp_safe_redirect( promotur_url( 'panel/equipo' ) );
@@ -106,22 +114,28 @@ class PROMOTUR_Auth {
 		);
 		$user = wp_signon( $creds, is_ssl() );
 		if ( is_wp_error( $user ) ) {
-			$vars['error'] = __( 'Usuario o contraseña incorrectos.', 'caaguazu-portal' );
+			$vars['error'] = ( 'promotur_suspended' === $user->get_error_code() )
+				? __( 'Tu cuenta está suspendida. Contactá al equipo.', 'caaguazu-portal' )
+				: __( 'Usuario o contraseña incorrectos.', 'caaguazu-portal' );
 			return $vars;
 		}
 		wp_safe_redirect( $this->safe_next() );
 		exit;
 	}
 
-	/* ----- Registro ----- */
+	/* ----- Registro (INVITE-ONLY) ----- */
 	private function process_register( $vars ) {
 		// Token de invitación (de la query var o del POST).
 		$token = sanitize_text_field( get_query_var( 'promotur_token' ) );
 		if ( ! $token && isset( $_REQUEST['token'] ) ) {
 			$token = sanitize_text_field( wp_unslash( $_REQUEST['token'] ) );
 		}
-		$vars['token'] = $token;
-		$invite        = $this->get_invite( $token );
+		$row    = PROMOTUR_Invitations::find_by_token( $token );
+		$status = PROMOTUR_Invitations::status( $row );
+
+		$vars['token']         = $token;
+		$vars['invite_status'] = $status;            // valid|used|expired|revoked|invalid
+		$vars['invite_role']   = $row ? PROMOTUR_Roles::label( $row['role'] ) : '';
 
 		if ( empty( $_POST['promotur_auth'] ) || 'registro' !== $_POST['promotur_auth'] ) {
 			return $vars;
@@ -130,13 +144,19 @@ class PROMOTUR_Auth {
 			$vars['error'] = __( 'Sesión expirada. Recargá la página.', 'caaguazu-portal' );
 			return $vars;
 		}
+		// Sólo con invitación válida (invite-only).
+		if ( 'valid' !== $status ) {
+			$vars['error'] = __( 'Necesitás una invitación válida para registrarte.', 'caaguazu-portal' );
+			return $vars;
+		}
 
 		$username = sanitize_user( wp_unslash( $_POST['user_login'] ?? '' ) );
 		$email    = sanitize_email( wp_unslash( $_POST['email'] ?? '' ) );
+		$phone    = sanitize_text_field( wp_unslash( $_POST['phone'] ?? '' ) );
 		$pass     = (string) ( $_POST['user_pass'] ?? '' );
 
-		if ( ! $username || ! is_email( $email ) || strlen( $pass ) < 6 ) {
-			$vars['error'] = __( 'Completá usuario, un email válido y una contraseña de 6+ caracteres.', 'caaguazu-portal' );
+		if ( ! $username || ! is_email( $email ) || '' === $phone || strlen( $pass ) < 6 ) {
+			$vars['error'] = __( 'Completá usuario, email, teléfono y una contraseña de 6+ caracteres.', 'caaguazu-portal' );
 			return $vars;
 		}
 		if ( username_exists( $username ) || email_exists( $email ) ) {
@@ -144,11 +164,7 @@ class PROMOTUR_Auth {
 			return $vars;
 		}
 
-		// Rol: el de la invitación (si es válida) o visitante por defecto.
-		$role = $invite && ! empty( $invite['role'] ) ? $invite['role'] : 'promotur_visitante';
-		if ( ! array_key_exists( $role, PROMOTUR_Roles::roles() ) ) {
-			$role = 'promotur_visitante';
-		}
+		$role = array_key_exists( $row['role'], PROMOTUR_Roles::roles() ) ? $row['role'] : 'promotur_visitante';
 
 		$user_id = wp_insert_user( array(
 			'user_login' => $username,
@@ -161,9 +177,10 @@ class PROMOTUR_Auth {
 			return $vars;
 		}
 
-		if ( $invite ) {
-			$this->consume_invite( $token );
-		}
+		update_user_meta( $user_id, '_promotur_phone', $phone );
+		update_user_meta( $user_id, '_promotur_invited_via', (int) $row['id'] );
+		PROMOTUR_Invitations::mark_used( (int) $row['id'], (int) $user_id );
+		PROMOTUR_Audit::log( 'user_registered', array( 'user_id' => $user_id, 'entity_type' => 'user', 'entity_id' => $user_id, 'payload' => array( 'role' => $role ) ) );
 
 		wp_set_current_user( $user_id );
 		wp_set_auth_cookie( $user_id );
@@ -234,49 +251,4 @@ class PROMOTUR_Auth {
 		exit;
 	}
 
-	/* ----- Invitaciones ----- */
-
-	/**
-	 * Devuelve la invitación si el token es válido y no venció.
-	 *
-	 * @param string $token
-	 * @return array|null { role, expires }
-	 */
-	public function get_invite( $token ) {
-		if ( ! $token ) { return null; }
-		$invites = get_option( self::INVITES_OPTION, array() );
-		if ( ! isset( $invites[ $token ] ) ) { return null; }
-		$inv = $invites[ $token ];
-		if ( ! empty( $inv['expires'] ) && time() > (int) $inv['expires'] ) {
-			return null;
-		}
-		return $inv;
-	}
-
-	private function consume_invite( $token ) {
-		$invites = get_option( self::INVITES_OPTION, array() );
-		if ( isset( $invites[ $token ] ) ) {
-			unset( $invites[ $token ] );
-			update_option( self::INVITES_OPTION, $invites );
-		}
-	}
-
-	/**
-	 * Crea un token de invitación (lo usa el panel de equipo del Promotor).
-	 *
-	 * @param string $role
-	 * @param int    $ttl_days
-	 * @return string token
-	 */
-	public static function create_invite( $role = 'promotur_mini', $ttl_days = 14 ) {
-		$invites = get_option( self::INVITES_OPTION, array() );
-		$token   = wp_generate_password( 20, false, false );
-		$invites[ $token ] = array(
-			'role'    => $role,
-			'expires' => time() + ( $ttl_days * DAY_IN_SECONDS ),
-			'by'      => get_current_user_id(),
-		);
-		update_option( self::INVITES_OPTION, $invites );
-		return $token;
-	}
 }

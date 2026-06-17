@@ -364,9 +364,46 @@ html.promotur-no-splash .promotur-splash{ display:none; }
 	html:not(.promotur-no-splash) .promotur-splash{ display:none; }
 }
 
+/* ---------- Iteración 2: navegación móvil + pulido del modo claro ---------- */
+.promotur-bottomnav{ display:none; }
+
+@media (max-width:899px){
+	.promotur-bottomnav{
+		display:flex; position:fixed; left:0; right:0; bottom:0; z-index:46;
+		background:color-mix(in oklab, var(--promotur-surface) 94%, transparent);
+		backdrop-filter:saturate(1.4) blur(8px);
+		border-top:1px solid var(--promotur-border);
+		padding:6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+		justify-content:space-around;
+	}
+	.promotur-bottomnav__item{
+		display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+		flex:1; min-height:48px; padding:4px 2px; border-radius:10px;
+		text-decoration:none; color:var(--promotur-text-muted); font-size:.66rem; font-weight:600;
+	}
+	.promotur-bottomnav__item.is-active{ color:var(--promotur-brand); background:var(--promotur-surface-alt); }
+	.promotur-bottomnav__item svg{ width:22px; height:22px; }
+
+	/* Espacio para que la barra no tape el contenido. */
+	.promotur-content{ padding-bottom:80px; }
+
+	/* Targets táctiles más cómodos en teléfono. */
+	.promotur-nav__item{ padding:12px; }
+	.promotur-iconbtn,.promotur-hamburger{ width:44px; height:44px; }
+	.promotur-btn{ padding:.72em 1.2em; }
+	.promotur-topbar__title{ font-size:1rem; }
+	.promotur-userchip{ padding:6px; }
+	/* Formularios y filtros a una columna, inputs full-width. */
+	.promotur-explorar__filters{ flex-direction:column; align-items:stretch; }
+	.promotur-explorar__filters input[type=search],.promotur-explorar__filters select{ width:100%; }
+}
+
+/* Modo claro/blanco (default): superficies limpias y bordes nítidos. */
+:root{ --promotur-shadow:0 1px 2px rgba(20,30,25,.05), 0 8px 22px rgba(20,30,25,.06); }
+
 /* ---------- Print ---------- */
 @media print{
-	.promotur-sidebar,.promotur-topbar,.promotur-splash,.promotur-backdrop,
+	.promotur-sidebar,.promotur-topbar,.promotur-splash,.promotur-backdrop,.promotur-bottomnav,
 	.promotur-resena-form,.promotur-contacto-form,.promotur-report,.promotur-itin__ctrls{ display:none !important; }
 	.promotur-main{ margin:0 !important; }
 	.promotur-content{ padding:0; max-width:none; }

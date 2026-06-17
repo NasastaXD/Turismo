@@ -57,5 +57,10 @@ lee la versión del header, empaqueta `caaguazu-portal.zip` y publica el release
 
 == Changelog ==
 
+= 1.1.0 =
+* Registro INVITE-ONLY con teléfono obligatorio; invitaciones en tabla custom con link corto /i/<token>.
+* Gestión en wp-admin: Usuarios (editar/eliminar/suspender), Invitaciones y Logs (usuarios y posts) sobre una tabla de auditoría.
+* Suspensión reversible de usuarios. Sección "Ayuda" en el panel. Barra de navegación inferior en móvil y pulido del modo claro.
+
 = 1.0.0 =
 * Fase 0 (framework del panel) + Fase 1 (MVP editorial).

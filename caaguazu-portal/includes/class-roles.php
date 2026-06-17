@@ -36,6 +36,7 @@ class PROMOTUR_Roles {
 			'promotur_curate_featured' => true,
 			'promotur_moderate'        => true,
 			'promotur_manage_team'     => true,
+			'promotur_manage_users'    => true,
 			'promotur_view_reports'    => true,
 			'promotur_manage_media'    => true,
 			'promotur_manage_structure'=> true,
@@ -75,6 +76,7 @@ class PROMOTUR_Roles {
 		return array(
 			'home'           => 'promotur_view_panel',
 			'buscar'         => 'promotur_view_panel',
+			'ayuda'          => 'promotur_view_panel',
 			'perfil'         => 'promotur_edit_profile',
 			'editor'         => 'promotur_edit_destino',
 			'captura'        => 'promotur_create_draft',
