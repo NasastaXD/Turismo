@@ -35,7 +35,120 @@
 		initReview();
 		initModeration();
 		initGestion();
+		initCaptura();
 	});
+
+	/* ---------- Salida de campo (captura offline) ---------- */
+	function initCaptura() {
+		var root = document.querySelector('[data-captura]');
+		var list = document.querySelector('[data-captura-list]');
+		if (!root || !list) { return; }
+		var KEY = 'promotur_capturas';
+		var form = root.querySelector('[data-captura-form]');
+		var msg = form.querySelector('[data-form-msg]');
+		var photoInput = form.querySelector('[data-captura-photo]');
+		var geoBtn = form.querySelector('[data-captura-geo]');
+		var countEl = document.querySelector('[data-captura-count]');
+		var syncBtn = document.querySelector('[data-captura-sync]');
+		var photoData = null;
+
+		function getQ() { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { return []; } }
+		function setQ(q) { try { localStorage.setItem(KEY, JSON.stringify(q)); } catch (e) { alert('No hay espacio para guardar la foto offline.'); } }
+
+		if (photoInput) {
+			photoInput.addEventListener('change', function () {
+				var f = photoInput.files && photoInput.files[0];
+				if (!f) { photoData = null; return; }
+				var r = new FileReader();
+				r.onload = function () { photoData = r.result; };
+				r.readAsDataURL(f);
+			});
+		}
+		if (geoBtn && navigator.geolocation) {
+			geoBtn.addEventListener('click', function () {
+				geoBtn.disabled = true;
+				navigator.geolocation.getCurrentPosition(function (p) {
+					form.querySelector('[data-captura-lat]').value = p.coords.latitude.toFixed(6);
+					form.querySelector('[data-captura-lng]').value = p.coords.longitude.toFixed(6);
+					geoBtn.disabled = false;
+				}, function () { geoBtn.disabled = false; }, { enableHighAccuracy: true, timeout: 8000 });
+			});
+		}
+
+		form.addEventListener('submit', function (e) {
+			e.preventDefault();
+			var q = getQ();
+			q.push({
+				id: Date.now(),
+				titulo: form.querySelector('[name="titulo"]').value,
+				nota: form.querySelector('[name="nota"]').value,
+				lat: form.querySelector('[data-captura-lat]').value,
+				lng: form.querySelector('[data-captura-lng]').value,
+				photo: photoData
+			});
+			setQ(q);
+			form.reset();
+			photoData = null;
+			render();
+			if (msg) { msg.textContent = '✓ ' + (navigator.onLine ? 'Guardada' : 'Guardada offline'); msg.className = 'promotur-form-msg is-success'; }
+		});
+
+		function render() {
+			var q = getQ();
+			if (countEl) { countEl.textContent = '(' + q.length + ')'; }
+			if (!q.length) { list.innerHTML = '<p class="promotur-muted">Sin capturas pendientes.</p>'; return; }
+			list.innerHTML = '';
+			q.forEach(function (item) {
+				var row = document.createElement('div');
+				row.className = 'promotur-row';
+				row.innerHTML = '<span class="promotur-row__main"><span class="promotur-row__title">' + escapeHtml(item.titulo || '(sin nombre)') + '</span>' +
+					'<span class="promotur-row__meta">' + (item.lat ? '📍 ' + item.lat + ', ' + item.lng : 'sin GPS') + (item.photo ? ' · 📷' : '') + '</span></span>';
+				var rm = document.createElement('button');
+				rm.type = 'button'; rm.className = 'promotur-iconbtn'; rm.textContent = '✕';
+				rm.addEventListener('click', function () { setQ(getQ().filter(function (x) { return x.id !== item.id; })); render(); });
+				row.appendChild(rm);
+				list.appendChild(row);
+			});
+		}
+
+		if (syncBtn) {
+			syncBtn.addEventListener('click', function () {
+				if (!navigator.onLine) { alert('Necesitás conexión para sincronizar.'); return; }
+				var q = getQ();
+				if (!q.length) { return; }
+				syncBtn.disabled = true;
+				syncOne(q, 0);
+			});
+		}
+
+		function syncOne(q, i) {
+			if (i >= q.length) { syncBtn.disabled = false; render(); if (msg) { msg.textContent = '✓ Sincronizado'; msg.className = 'promotur-form-msg is-success'; } return; }
+			var item = q[i];
+			var afterPhoto = function (attachmentId) {
+				var fd = new FormData();
+				fd.append('post_id', '0');
+				fd.append('titulo', item.titulo || '(sin título)');
+				fd.append('descripcion', item.nota || '');
+				if (item.lat) { fd.append('meta[_promotur_lat]', item.lat); }
+				if (item.lng) { fd.append('meta[_promotur_lng]', item.lng); }
+				if (attachmentId) { fd.append('meta[_promotur_portada]', attachmentId); }
+				ajax('save_destino', fd).then(function (r) {
+					if (r.success) { setQ(getQ().filter(function (x) { return x.id !== item.id; })); }
+					syncOne(q, i + 1);
+				}).catch(function () { syncOne(q, i + 1); });
+			};
+			if (item.photo) {
+				fetch(item.photo).then(function (res) { return res.blob(); }).then(function (blob) {
+					var pf = new FormData();
+					pf.append('file', blob, 'captura-' + item.id + '.jpg');
+					ajax('upload_media', pf).then(function (r) { afterPhoto(r.success ? r.data.id : 0); }).catch(function () { afterPhoto(0); });
+				}).catch(function () { afterPhoto(0); });
+			} else { afterPhoto(0); }
+		}
+
+		function escapeHtml(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+		render();
+	}
 
 	/* ---------- Gestión (tareas, nivel) ---------- */
 	function initGestion() {

@@ -47,6 +47,7 @@ require_once PROMOTUR_DIR . 'includes/class-curaduria.php';
 require_once PROMOTUR_DIR . 'includes/class-tareas.php';
 require_once PROMOTUR_DIR . 'includes/class-stats.php';
 require_once PROMOTUR_DIR . 'includes/class-gestion-ajax.php';
+require_once PROMOTUR_DIR . 'includes/class-i18n.php';
 
 /**
  * Arranque del plugin.
@@ -71,6 +72,7 @@ function promotur_boot() {
 	PROMOTUR_Tareas::instance();
 	PROMOTUR_Stats::instance();
 	PROMOTUR_Gestion_Ajax::instance();
+	PROMOTUR_I18n::instance();
 
 	// Auto re-flush de rewrite rules si cambió la versión (upgrades sin re-activar).
 	if ( get_option( 'promotur_version' ) !== PROMOTUR_VERSION ) {

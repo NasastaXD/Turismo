@@ -24,6 +24,8 @@ $q       = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) )
 			<input type="search" name="q" value="<?php echo esc_attr( $q ); ?>" placeholder="<?php esc_attr_e( 'Buscar…', 'caaguazu-portal' ); ?>" aria-label="<?php esc_attr_e( 'Buscar', 'caaguazu-portal' ); ?>">
 		</form>
 
+		<?php echo PROMOTUR_I18n::switcher(); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+
 		<button type="button" class="promotur-iconbtn" data-theme-toggle aria-label="<?php esc_attr_e( 'Cambiar tema', 'caaguazu-portal' ); ?>">
 			<span class="promotur-theme-light"><?php echo promotur_icon( 'sun' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
 			<span class="promotur-theme-dark"><?php echo promotur_icon( 'star' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>

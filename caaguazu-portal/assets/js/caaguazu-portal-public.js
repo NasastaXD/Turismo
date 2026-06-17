@@ -27,7 +27,37 @@
 		initConsulta();
 		initReporte();
 		initItinerary();
+		initQR();
 	});
+
+	/* ---------- QR por destino ---------- */
+	function initQR() {
+		var btn = document.querySelector('[data-qr]');
+		var modal = document.querySelector('[data-qr-modal]');
+		if (!btn || !modal) { return; }
+		var canvas = modal.querySelector('[data-qr-canvas]');
+		var close = modal.querySelector('[data-qr-close]');
+		var drawn = false;
+
+		btn.addEventListener('click', function () {
+			if (!drawn && typeof qrcode !== 'undefined') {
+				try {
+					var qr = qrcode(0, 'M');
+					qr.addData(btn.getAttribute('data-url'));
+					qr.make();
+					canvas.innerHTML = qr.createSvgTag({ cellSize: 6, margin: 4, scalable: true });
+					var svg = canvas.querySelector('svg');
+					if (svg) { svg.setAttribute('width', '220'); svg.setAttribute('height', '220'); }
+					drawn = true;
+				} catch (e) { canvas.textContent = btn.getAttribute('data-url'); }
+			}
+			modal.hidden = false;
+		});
+		function hide() { modal.hidden = true; }
+		if (close) { close.addEventListener('click', hide); }
+		modal.addEventListener('click', function (e) { if (e.target === modal) { hide(); } });
+		document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { hide(); } });
+	}
 
 	/* ---------- Rating ---------- */
 	function initRatingStars() {

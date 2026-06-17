@@ -57,6 +57,14 @@ while ( have_posts() ) :
 				<a class="promotur-btn promotur-btn--primary" href="<?php echo esc_url( $maps_url ); ?>" target="_blank" rel="noopener">📍 <?php esc_html_e( 'Cómo llegar', 'caaguazu-portal' ); ?></a>
 			<?php endif; ?>
 			<button type="button" class="promotur-btn promotur-btn--ghost" data-itin-add data-id="<?php echo esc_attr( $id ); ?>" data-title="<?php echo esc_attr( get_the_title() ); ?>" data-url="<?php echo esc_url( get_permalink() ); ?>">➕ <?php esc_html_e( 'Agregar a mi viaje', 'caaguazu-portal' ); ?></button>
+			<button type="button" class="promotur-btn promotur-btn--ghost" data-qr data-url="<?php echo esc_url( get_permalink() ); ?>" data-title="<?php echo esc_attr( get_the_title() ); ?>">🔳 <?php esc_html_e( 'QR', 'caaguazu-portal' ); ?></button>
+		</div>
+		<div class="promotur-qrmodal" data-qr-modal hidden>
+			<div class="promotur-qrmodal__box">
+				<button type="button" class="promotur-qrmodal__close" data-qr-close aria-label="<?php esc_attr_e( 'Cerrar', 'caaguazu-portal' ); ?>">×</button>
+				<div data-qr-canvas></div>
+				<p class="promotur-muted"><?php esc_html_e( 'Escaneá para abrir esta ficha en el celular.', 'caaguazu-portal' ); ?></p>
+			</div>
 		</div>
 
 		<div class="promotur-destino__body prose-content">

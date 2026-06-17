@@ -145,6 +145,7 @@ function promotur_nav_items() {
 		array( 'route' => 'panel',                'label' => __( 'Inicio', 'caaguazu-portal' ),        'icon' => 'home',   'cap' => 'promotur_view_panel' ),
 		array( 'route' => 'panel/mis-contenidos', 'label' => __( 'Mis contenidos', 'caaguazu-portal' ),'icon' => 'doc',    'cap' => 'promotur_create_draft' ),
 		array( 'route' => 'panel/editor',         'label' => __( 'Nueva ficha', 'caaguazu-portal' ),   'icon' => 'edit',   'cap' => 'promotur_edit_destino' ),
+		array( 'route' => 'panel/captura',        'label' => __( 'Salida de campo', 'caaguazu-portal' ),'icon' => 'image', 'cap' => 'promotur_create_draft' ),
 		array( 'route' => 'panel/revision',       'label' => __( 'Cola de revisión', 'caaguazu-portal' ),'icon' => 'inbox','cap' => 'promotur_review_content', 'badge' => 'revision' ),
 		array( 'route' => 'panel/tareas',         'label' => __( 'Tareas', 'caaguazu-portal' ),         'icon' => 'tasks',  'cap' => 'promotur_view_own_tasks', 'badge' => 'tareas' ),
 		array( 'route' => 'panel/curaduria',      'label' => __( 'Curaduría', 'caaguazu-portal' ),      'icon' => 'star',   'cap' => 'promotur_curate_featured' ),

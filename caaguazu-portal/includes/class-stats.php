@@ -105,6 +105,30 @@ class PROMOTUR_Stats {
 		}
 	}
 
+	/* ----- Confianza progresiva → permisos ----- */
+
+	/**
+	 * ¿Puede editar fichas ya publicadas sin pasar de nuevo por revisión?
+	 * Desbloqueado en nivel Jr o superior (o si es revisor/admin).
+	 */
+	public static function can_edit_published( $user_id ) {
+		if ( user_can( $user_id, 'promotur_review_content' ) || user_can( $user_id, 'manage_options' ) ) {
+			return true;
+		}
+		return in_array( self::get_level( $user_id ), array( 'jr', 'confianza' ), true );
+	}
+
+	/**
+	 * ¿Puede publicar directo (con auditoría posterior)?
+	 * Desbloqueado en nivel "De confianza" (o si ya tiene la cap de publicar).
+	 */
+	public static function can_publish_directly( $user_id ) {
+		if ( user_can( $user_id, 'promotur_publish_destino' ) ) {
+			return true;
+		}
+		return 'confianza' === self::get_level( $user_id );
+	}
+
 	/* ----- Producción ----- */
 
 	/** Cuenta destinos de un autor por estado de publicación. */

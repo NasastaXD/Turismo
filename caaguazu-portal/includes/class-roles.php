@@ -77,6 +77,7 @@ class PROMOTUR_Roles {
 			'buscar'         => 'promotur_view_panel',
 			'perfil'         => 'promotur_edit_profile',
 			'editor'         => 'promotur_edit_destino',
+			'captura'        => 'promotur_create_draft',
 			'mis-contenidos' => 'promotur_create_draft',
 			'revision'       => 'promotur_review_content',
 			'tareas'         => 'promotur_view_own_tasks',

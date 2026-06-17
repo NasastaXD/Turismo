@@ -111,12 +111,24 @@ class PROMOTUR_Ajax {
 			wp_set_object_terms( $post_id, array_map( 'intval', (array) $_POST['categoria'] ), 'promotur_categoria' );
 		}
 
+		// Confianza progresiva: editar una ficha PUBLICADA sin nivel suficiente la deja
+		// en re-revisión (sin bajarla del aire); con nivel Jr+ la edición es directa.
+		$message = __( 'Borrador guardado.', 'caaguazu-portal' );
+		$author  = (int) get_post_field( 'post_author', $post_id );
+		if ( 'publicado' === PROMOTUR_Editorial::get_estado( $post_id )
+			&& get_current_user_id() === $author
+			&& ! PROMOTUR_Stats::can_edit_published( get_current_user_id() ) ) {
+			update_post_meta( $post_id, '_promotur_estado', 'en_revision' ); // sigue público (post_status intacto)
+			update_post_meta( $post_id, '_promotur_reedit', 1 );
+			$message = __( 'Guardado. Como editaste una ficha publicada, queda en re-revisión.', 'caaguazu-portal' );
+		}
+
 		$checklist = PROMOTUR_Editorial::checklist( $post_id );
 		wp_send_json_success( array(
 			'post_id'   => $post_id,
 			'checklist' => $checklist,
 			'complete'  => PROMOTUR_Editorial::is_complete( $post_id ),
-			'message'   => __( 'Borrador guardado.', 'caaguazu-portal' ),
+			'message'   => $message,
 		) );
 	}
 
@@ -132,6 +144,12 @@ class PROMOTUR_Ajax {
 				'message'   => __( 'Faltan datos obligatorios. Completá el checklist antes de enviar.', 'caaguazu-portal' ),
 				'checklist' => PROMOTUR_Editorial::checklist( $post_id ),
 			) );
+		}
+		// Confianza progresiva: nivel "De confianza" publica directo (con auditoría).
+		if ( PROMOTUR_Stats::can_publish_directly( get_current_user_id() ) ) {
+			PROMOTUR_Editorial::set_estado( $post_id, 'publicado' );
+			PROMOTUR_Editorial::add_feedback( $post_id, get_current_user_id(), __( 'Publicación directa por nivel de confianza (auditoría posterior).', 'caaguazu-portal' ) );
+			wp_send_json_success( array( 'message' => __( '¡Publicado! (nivel de confianza)', 'caaguazu-portal' ), 'redirect' => promotur_url( 'panel/mis-contenidos' ) ) );
 		}
 		PROMOTUR_Editorial::set_estado( $post_id, 'enviado' );
 		wp_send_json_success( array( 'message' => __( '¡Enviado a revisión!', 'caaguazu-portal' ), 'redirect' => promotur_url( 'panel/mis-contenidos' ) ) );

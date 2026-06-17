@@ -46,8 +46,10 @@ class PROMOTUR_Public {
 				'empty'   => __( 'Tu viaje está vacío. Agregá destinos desde sus fichas.', 'caaguazu-portal' ),
 			),
 		) );
+		wp_register_script( 'promotur-qrcode', promotur_asset( 'js/qrcode.js' ), array(), '1.4.4', true );
 		if ( is_singular( PROMOTUR_Destinos::CPT ) ) {
 			self::ensure_assets();
+			wp_enqueue_script( 'promotur-qrcode' );
 		}
 	}
 
