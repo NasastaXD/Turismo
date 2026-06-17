@@ -1,0 +1,66 @@
+name: Publish release
+
+# Empaqueta el plugin del portal (y los demás artefactos distribuibles) y publica
+# un GitHub Release con la versión leída del header del plugin. El auto-updater del
+# plugin (plugin-update-checker) descarga el .zip adjunto al release más reciente.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'caaguazu-portal/**'
+      - 'caaguazu-locales/**'
+      - 'caaguazu-theme/**'
+      - '.github/workflows/publish-releases.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write   # crear el Release y subir los zips
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Leer versión del plugin del portal
+        id: ver
+        run: |
+          VERSION=$(grep -m1 "Version:" caaguazu-portal/caaguazu-portal.php \
+                    | sed -E 's/.*Version: *//' | tr -d '[:space:]')
+          if [ -z "$VERSION" ]; then echo "No se pudo leer la versión"; exit 1; fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Versión detectada: $VERSION"
+
+      - name: ¿El tag ya existe?
+        id: check
+        run: |
+          if git ls-remote --tags origin "refs/tags/${{ steps.ver.outputs.tag }}" | grep -q "${{ steps.ver.outputs.tag }}"; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "El tag ${{ steps.ver.outputs.tag }} ya existe; no se publica un release nuevo. Bumpeá la versión para publicar."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Empaquetar artefactos
+        if: steps.check.outputs.exists == 'false'
+        run: |
+          ZIP_EXCLUDES=(-x "*/node_modules/*" "*/.git/*" "*/tests/*" "*/.env*" "*/.DS_Store")
+          zip -r caaguazu-portal.zip  caaguazu-portal/  "${ZIP_EXCLUDES[@]}"
+          # Artefactos de los otros componentes (sus updaters usan releases/latest/download/*.zip).
+          zip -r caaguazu-locales.zip caaguazu-locales/ "${ZIP_EXCLUDES[@]}"
+          zip -r caaguazu-theme.zip   caaguazu-theme/   "${ZIP_EXCLUDES[@]}"
+          ls -lh ./*.zip
+
+      - name: Crear GitHub Release
+        if: steps.check.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ver.outputs.tag }}
+          name: ${{ steps.ver.outputs.tag }}
+          generate_release_notes: true
+          files: |
+            caaguazu-portal.zip
+            caaguazu-locales.zip
+            caaguazu-theme.zip

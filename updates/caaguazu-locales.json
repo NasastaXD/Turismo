@@ -1,0 +1,16 @@
+{
+  "name": "Caaguazú Locales",
+  "slug": "caaguazu-locales",
+  "version": "1.0.0",
+  "author": "Municipalidad de Caaguazú",
+  "homepage": "https://turismo.caaguazu.net",
+  "requires": "6.0",
+  "tested": "6.5",
+  "requires_php": "7.4",
+  "last_updated": "2026-06-16",
+  "download_url": "https://github.com/nasastaxd/turismo/releases/latest/download/caaguazu-locales.zip",
+  "sections": {
+    "description": "Reservas por WhatsApp, mapa interactivo editable, reseñas con cuentas y panel para dueños de local.",
+    "changelog": "<h4>1.0.0</h4><ul><li>Versión inicial.</li></ul>"
+  }
+}

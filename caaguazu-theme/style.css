@@ -1,0 +1,18 @@
+/*
+Theme Name: Caaguazú Turismo
+Theme URI: https://turismo.caaguazu.net
+Author: Municipalidad de Caaguazú
+Author URI: https://caaguazu.net
+Description: Portal oficial de turismo de Caaguazú — Capital de la Madera del Paraguay. Tema convertido a partir del sitio estático original. Editable desde el admin de WordPress, con plantilla universal para 27 páginas pre-cargadas.
+Version: 1.0.0
+Requires at least: 6.0
+Tested up to: 6.5
+Requires PHP: 7.4
+License: GPL v2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: caaguazu
+Tags: tourism, government, custom-menu, custom-logo, featured-images, translation-ready
+*/
+
+/* Estilos del tema cargados desde /assets/css/styles.css via wp_enqueue_style.
+   Este archivo solo declara el tema. */

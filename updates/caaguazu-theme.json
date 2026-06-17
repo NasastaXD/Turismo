@@ -1,0 +1,12 @@
+{
+  "name": "Caaguazú Turismo",
+  "slug": "caaguazu-theme",
+  "version": "1.0.0",
+  "author": "Municipalidad de Caaguazú",
+  "url": "https://turismo.caaguazu.net",
+  "requires": "6.0",
+  "tested": "6.5",
+  "requires_php": "7.4",
+  "last_updated": "2026-06-16",
+  "download_url": "https://github.com/nasastaxd/turismo/releases/latest/download/caaguazu-theme.zip"
+}
