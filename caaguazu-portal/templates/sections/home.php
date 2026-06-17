@@ -32,6 +32,10 @@ if ( $can_draft ) {
 	$pulse[] = array( 'n' => $count_by( 'necesita_cambios', $uid ), 'label' => __( 'esperan tu corrección', 'caaguazu-portal' ), 'url' => 'panel/mis-contenidos', 'icon' => 'edit' );
 	$pulse[] = array( 'n' => $count_by( array( 'borrador', 'enviado', 'en_revision' ), $uid ), 'label' => __( 'en proceso', 'caaguazu-portal' ), 'url' => 'panel/mis-contenidos', 'icon' => 'doc' );
 }
+if ( current_user_can( 'promotur_moderate' ) ) {
+	$pulse[] = array( 'n' => count( PROMOTUR_Resenas::pending() ), 'label' => __( 'reseñas por moderar', 'caaguazu-portal' ), 'url' => 'panel/moderacion', 'icon' => 'star' );
+	$pulse[] = array( 'n' => PROMOTUR_Consultas::count_open(), 'label' => __( 'consultas sin responder', 'caaguazu-portal' ), 'url' => 'panel/moderacion', 'icon' => 'inbox' );
+}
 
 $page_title = __( 'Inicio', 'caaguazu-portal' );
 $body = function () use ( $user, $pulse, $can_draft, $can_review ) {

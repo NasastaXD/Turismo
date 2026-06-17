@@ -21,6 +21,38 @@ class PROMOTUR_Public {
 	private function __construct() {
 		add_shortcode( 'promotur_destinos', array( $this, 'sc_destinos' ) );
 		add_shortcode( 'promotur_mapa', array( $this, 'sc_mapa' ) );
+		add_shortcode( 'promotur_explorar', array( $this, 'sc_explorar' ) );
+		add_shortcode( 'promotur_itinerario', array( $this, 'sc_itinerario' ) );
+		add_shortcode( 'promotur_contacto', array( $this, 'sc_contacto' ) );
+		add_action( 'wp_enqueue_scripts', array( $this, 'register_public' ) );
+	}
+
+	/**
+	 * Registra los assets públicos y los encola en la ficha de destino.
+	 */
+	public function register_public() {
+		wp_register_style( 'promotur', promotur_asset( 'css/caaguazu-portal.css' ), array(), PROMOTUR_VERSION );
+		wp_register_script( 'promotur-public', promotur_asset( 'js/caaguazu-portal-public.js' ), array(), PROMOTUR_VERSION, true );
+		wp_localize_script( 'promotur-public', 'PROMOTUR_PUB', array(
+			'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+			'nonce'   => wp_create_nonce( 'promotur_pub' ),
+			'i18n'    => array(
+				'sending' => __( 'Enviando…', 'caaguazu-portal' ),
+				'error'   => __( 'Ocurrió un error. Probá de nuevo.', 'caaguazu-portal' ),
+				'added'   => __( 'Agregado a tu viaje', 'caaguazu-portal' ),
+				'copied'  => __( 'Enlace copiado', 'caaguazu-portal' ),
+				'empty'   => __( 'Tu viaje está vacío. Agregá destinos desde sus fichas.', 'caaguazu-portal' ),
+			),
+		) );
+		if ( is_singular( PROMOTUR_Destinos::CPT ) ) {
+			self::ensure_assets();
+		}
+	}
+
+	/** Encola el bundle público (CSS + JS). Útil desde shortcodes. */
+	public static function ensure_assets() {
+		wp_enqueue_style( 'promotur', promotur_asset( 'css/caaguazu-portal.css' ), array(), PROMOTUR_VERSION );
+		wp_enqueue_script( 'promotur-public' );
 	}
 
 	/**
@@ -120,5 +152,154 @@ JS;
 			esc_attr( $map_id ),
 			esc_attr( $atts['alto'] )
 		);
+	}
+
+	/**
+	 * Explorar con filtros (GET) + grid. Filtros: categoria, zona, etiqueta, q, gratis.
+	 */
+	public function sc_explorar( $atts ) {
+		self::ensure_assets();
+
+		$cat    = isset( $_GET['cat'] ) ? sanitize_title( wp_unslash( $_GET['cat'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+		$zona   = isset( $_GET['zona'] ) ? sanitize_title( wp_unslash( $_GET['zona'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+		$etq    = isset( $_GET['etq'] ) ? sanitize_title( wp_unslash( $_GET['etq'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+		$q      = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+
+		$args = array(
+			'post_type'      => PROMOTUR_Destinos::CPT,
+			'post_status'    => 'publish',
+			'posts_per_page' => 36,
+			's'              => $q,
+		);
+		$tax = array();
+		if ( $cat )  { $tax[] = array( 'taxonomy' => 'promotur_categoria', 'field' => 'slug', 'terms' => $cat ); }
+		if ( $zona ) { $tax[] = array( 'taxonomy' => 'promotur_zona', 'field' => 'slug', 'terms' => $zona ); }
+		if ( $etq )  { $tax[] = array( 'taxonomy' => 'promotur_etiqueta', 'field' => 'slug', 'terms' => $etq ); }
+		if ( $tax )  { $args['tax_query'] = array_merge( array( 'relation' => 'AND' ), $tax ); }
+
+		$query = new WP_Query( $args );
+
+		ob_start();
+		?>
+		<div class="promotur-explorar">
+			<form class="promotur-explorar__filters" method="get">
+				<input type="search" name="q" value="<?php echo esc_attr( $q ); ?>" placeholder="<?php esc_attr_e( 'Buscar destinos…', 'caaguazu-portal' ); ?>">
+				<?php
+				$this->filter_select( 'cat', 'promotur_categoria', $cat, __( 'Categoría', 'caaguazu-portal' ) );
+				$this->filter_select( 'zona', 'promotur_zona', $zona, __( 'Zona', 'caaguazu-portal' ) );
+				$this->filter_select( 'etq', 'promotur_etiqueta', $etq, __( 'Etiqueta', 'caaguazu-portal' ) );
+				?>
+				<button type="submit" class="promotur-btn promotur-btn--primary"><?php esc_html_e( 'Filtrar', 'caaguazu-portal' ); ?></button>
+				<a class="promotur-btn promotur-btn--ghost" href="<?php echo esc_url( strtok( $_SERVER['REQUEST_URI'] ?? '', '?' ) ); ?>"><?php esc_html_e( 'Limpiar', 'caaguazu-portal' ); ?></a>
+			</form>
+
+			<?php if ( ! $query->have_posts() ) : ?>
+				<p class="promotur-muted"><?php esc_html_e( 'No encontramos destinos con esos filtros.', 'caaguazu-portal' ); ?></p>
+			<?php else : ?>
+				<div class="promotur-grid promotur-grid--3 promotur-vitrina">
+					<?php while ( $query->have_posts() ) : $query->the_post();
+						$id  = get_the_ID();
+						$g   = get_post_meta( $id, '_promotur_gancho', true );
+						$pid = get_post_meta( $id, '_promotur_portada', true );
+						$img = $pid ? wp_get_attachment_image_url( (int) $pid, 'medium_large' ) : get_the_post_thumbnail_url( $id, 'medium_large' );
+						?>
+						<a class="promotur-card promotur-card--link promotur-vitrina__card" href="<?php the_permalink(); ?>">
+							<span class="promotur-vitrina__media"<?php echo $img ? ' style="background-image:url(' . esc_url( $img ) . ')"' : ''; ?>></span>
+							<span class="promotur-vitrina__body">
+								<span class="promotur-row__title"><?php the_title(); ?></span>
+								<?php if ( $g ) : ?><span class="promotur-muted"><?php echo esc_html( $g ); ?></span><?php endif; ?>
+							</span>
+						</a>
+					<?php endwhile; ?>
+				</div>
+			<?php endif; ?>
+			<?php wp_reset_postdata(); ?>
+		</div>
+		<?php
+		return ob_get_clean();
+	}
+
+	/** Select de filtro por taxonomía. */
+	private function filter_select( $param, $taxonomy, $current, $label ) {
+		$terms = get_terms( array( 'taxonomy' => $taxonomy, 'hide_empty' => true ) );
+		if ( is_wp_error( $terms ) || empty( $terms ) ) { return; }
+		echo '<select name="' . esc_attr( $param ) . '">';
+		echo '<option value="">' . esc_html( $label ) . '</option>';
+		foreach ( $terms as $t ) {
+			printf( '<option value="%s" %s>%s</option>', esc_attr( $t->slug ), selected( $current, $t->slug, false ), esc_html( $t->name ) );
+		}
+		echo '</select>';
+	}
+
+	/**
+	 * Armador de itinerario (sin cuenta). El estado vive en localStorage; el JS
+	 * resuelve los IDs contra este mapa de destinos publicados.
+	 */
+	public function sc_itinerario( $atts ) {
+		self::ensure_assets();
+
+		$map = array();
+		$q   = new WP_Query( array( 'post_type' => PROMOTUR_Destinos::CPT, 'post_status' => 'publish', 'posts_per_page' => -1 ) );
+		while ( $q->have_posts() ) {
+			$q->the_post();
+			$id  = get_the_ID();
+			$lat = get_post_meta( $id, '_promotur_lat', true );
+			$lng = get_post_meta( $id, '_promotur_lng', true );
+			$map[ $id ] = array(
+				'title' => get_the_title(),
+				'url'   => get_permalink(),
+				'lat'   => $lat !== '' ? (float) $lat : null,
+				'lng'   => $lng !== '' ? (float) $lng : null,
+			);
+		}
+		wp_reset_postdata();
+		wp_add_inline_script( 'promotur-public', 'window.PROMOTUR_DESTINOS=' . wp_json_encode( $map ) . ';', 'before' );
+
+		ob_start();
+		?>
+		<div class="promotur-itinerario" data-itinerario>
+			<div class="promotur-pagehead">
+				<h2 class="text-h3"><?php esc_html_e( 'Mi viaje', 'caaguazu-portal' ); ?></h2>
+				<div class="promotur-inline-form">
+					<button type="button" class="promotur-btn promotur-btn--ghost promotur-btn--small" data-itin-share><?php esc_html_e( 'Compartir', 'caaguazu-portal' ); ?></button>
+					<button type="button" class="promotur-btn promotur-btn--ghost promotur-btn--small" onclick="window.print()"><?php esc_html_e( 'Imprimir / PDF', 'caaguazu-portal' ); ?></button>
+					<button type="button" class="promotur-btn promotur-btn--ghost promotur-btn--small" data-itin-clear><?php esc_html_e( 'Vaciar', 'caaguazu-portal' ); ?></button>
+				</div>
+			</div>
+			<div class="promotur-itinerario__list" data-itin-list></div>
+			<span class="promotur-form-msg" data-itin-msg aria-live="polite"></span>
+		</div>
+		<?php
+		return ob_get_clean();
+	}
+
+	/**
+	 * Formulario de contacto/consulta general.
+	 */
+	public function sc_contacto( $atts ) {
+		$atts = shortcode_atts( array( 'destino' => 0 ), $atts, 'promotur_contacto' );
+		self::ensure_assets();
+		return self::contact_form( (int) $atts['destino'] );
+	}
+
+	/**
+	 * Markup del formulario de consulta (reutilizable desde el single).
+	 */
+	public static function contact_form( $destino = 0 ) {
+		$user = wp_get_current_user();
+		ob_start();
+		?>
+		<form class="promotur-form promotur-contacto-form" data-consulta-form data-destino="<?php echo esc_attr( $destino ); ?>">
+			<h3 class="text-h3"><?php esc_html_e( '¿Tenés una consulta?', 'caaguazu-portal' ); ?></h3>
+			<div class="promotur-grid promotur-grid--2">
+				<label class="promotur-field"><span><?php esc_html_e( 'Nombre', 'caaguazu-portal' ); ?></span><input type="text" name="nombre" value="<?php echo esc_attr( $user->exists() ? $user->display_name : '' ); ?>" required></label>
+				<label class="promotur-field"><span><?php esc_html_e( 'Email', 'caaguazu-portal' ); ?></span><input type="email" name="email" value="<?php echo esc_attr( $user->exists() ? $user->user_email : '' ); ?>" required></label>
+			</div>
+			<label class="promotur-field"><span><?php esc_html_e( 'Mensaje', 'caaguazu-portal' ); ?></span><textarea name="mensaje" rows="3" required></textarea></label>
+			<button type="submit" class="promotur-btn promotur-btn--primary"><?php esc_html_e( 'Enviar consulta', 'caaguazu-portal' ); ?></button>
+			<span class="promotur-form-msg" data-form-msg aria-live="polite"></span>
+		</form>
+		<?php
+		return ob_get_clean();
 	}
 }

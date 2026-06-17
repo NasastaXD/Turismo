@@ -56,6 +56,7 @@ while ( have_posts() ) :
 			<?php if ( $maps_url ) : ?>
 				<a class="promotur-btn promotur-btn--primary" href="<?php echo esc_url( $maps_url ); ?>" target="_blank" rel="noopener">📍 <?php esc_html_e( 'Cómo llegar', 'caaguazu-portal' ); ?></a>
 			<?php endif; ?>
+			<button type="button" class="promotur-btn promotur-btn--ghost" data-itin-add data-id="<?php echo esc_attr( $id ); ?>" data-title="<?php echo esc_attr( get_the_title() ); ?>" data-url="<?php echo esc_url( get_permalink() ); ?>">➕ <?php esc_html_e( 'Agregar a mi viaje', 'caaguazu-portal' ); ?></button>
 		</div>
 
 		<div class="promotur-destino__body prose-content">
@@ -92,6 +93,26 @@ while ( have_posts() ) :
 				printf( esc_html__( 'Verificado por un Promotor el %s', 'caaguazu-portal' ), esc_html( mysql2date( get_option( 'date_format' ), $verif ) ) );
 			?></p>
 		<?php endif; ?>
+
+		<?php
+		// Reseñas de visitantes (moderadas).
+		echo PROMOTUR_Resenas::render_block( $id ); // phpcs:ignore WordPress.Security.EscapeOutput
+
+		// Reportar info desactualizada.
+		?>
+		<section class="promotur-report">
+			<button type="button" class="promotur-link-btn" data-report-toggle>⚠️ <?php esc_html_e( 'Reportar información desactualizada', 'caaguazu-portal' ); ?></button>
+			<form class="promotur-form promotur-report-form" data-reporte-form data-post="<?php echo esc_attr( $id ); ?>" hidden>
+				<label class="promotur-field"><span><?php esc_html_e( '¿Qué está desactualizado?', 'caaguazu-portal' ); ?></span><textarea name="content" rows="2" required></textarea></label>
+				<button type="submit" class="promotur-btn promotur-btn--ghost promotur-btn--small"><?php esc_html_e( 'Enviar reporte', 'caaguazu-portal' ); ?></button>
+				<span class="promotur-form-msg" data-form-msg aria-live="polite"></span>
+			</form>
+		</section>
+
+		<?php
+		// Consulta sobre este destino.
+		echo PROMOTUR_Public::contact_form( $id ); // phpcs:ignore WordPress.Security.EscapeOutput
+		?>
 
 		<p class="promotur-destino__author promotur-muted">
 			<?php

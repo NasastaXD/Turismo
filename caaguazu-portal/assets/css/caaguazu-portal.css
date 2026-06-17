@@ -306,9 +306,41 @@ html.promotur-no-splash .promotur-splash{ display:none; }
 	html:not(.promotur-no-splash) .promotur-splash{ display:none; }
 }
 
+/* ---------- Fase 2: reseñas, estrellas, explorar, itinerario ---------- */
+.promotur-stars{ display:inline-flex; gap:1px; }
+.promotur-star{ color:#d6d2c6; }
+.promotur-star.is-on{ color:#e0a92b; }
+.promotur-rating-input{ display:flex; gap:2px; }
+.promotur-rating-star{ background:none; border:0; font-size:1.7rem; line-height:1; color:#d6d2c6; cursor:pointer; padding:0; }
+.promotur-rating-star.is-on{ color:#e0a92b; }
+
+.promotur-resenas{ margin-top:2rem; }
+.promotur-resenas__summary{ display:flex; align-items:center; gap:10px; margin-bottom:1rem; }
+.promotur-resenas__avg{ font-family:var(--promotur-font-display); font-size:1.8rem; font-weight:800; }
+.promotur-resena{ padding:12px 0; border-top:1px solid var(--promotur-border); }
+.promotur-resena header{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:.9rem; }
+.promotur-resena p{ margin:.4rem 0 0; color:var(--promotur-text-2); }
+.promotur-resena-form,.promotur-contacto-form,.promotur-report-form{ margin-top:1.4rem; padding-top:1.2rem; border-top:1px solid var(--promotur-border); }
+.promotur-report{ margin-top:1.2rem; }
+
+.promotur-explorar__filters{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:1.2rem; align-items:center; }
+.promotur-explorar__filters input[type=search],.promotur-explorar__filters select{ width:auto; min-width:160px; }
+
+.promotur-itin__ctrls{ display:flex; gap:4px; }
+.promotur-itin__ctrls .promotur-iconbtn{ width:32px; height:32px; border:1px solid var(--promotur-border); }
+.promotur-mod p{ margin:.4rem 0; }
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce){
+	*,*::before,*::after{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
+	.promotur-splash{ animation:none; }
+	html:not(.promotur-no-splash) .promotur-splash{ display:none; }
+}
+
 /* ---------- Print ---------- */
 @media print{
-	.promotur-sidebar,.promotur-topbar,.promotur-splash,.promotur-backdrop{ display:none !important; }
+	.promotur-sidebar,.promotur-topbar,.promotur-splash,.promotur-backdrop,
+	.promotur-resena-form,.promotur-contacto-form,.promotur-report,.promotur-itin__ctrls{ display:none !important; }
 	.promotur-main{ margin:0 !important; }
 	.promotur-content{ padding:0; max-width:none; }
 	.promotur-card{ box-shadow:none; border-color:#ccc; }
