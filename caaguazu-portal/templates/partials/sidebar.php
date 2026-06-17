@@ -6,6 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 $current      = promotur_current_route(); // slug de sección actual
 $review_badge = PROMOTUR_Notifications::review_queue_count();
+$tareas_badge = class_exists( 'PROMOTUR_Tareas' ) ? PROMOTUR_Tareas::pending_count_for( get_current_user_id() ) : 0;
 ?>
 <aside class="promotur-sidebar" data-sidebar>
 	<a class="promotur-brand" href="<?php echo esc_url( promotur_url( 'panel' ) ); ?>">
@@ -27,6 +28,8 @@ $review_badge = PROMOTUR_Notifications::review_queue_count();
 			$badge_html = '';
 			if ( ! empty( $item['badge'] ) && 'revision' === $item['badge'] && $review_badge > 0 ) {
 				$badge_html = '<span class="promotur-nav__badge">' . esc_html( $review_badge ) . '</span>';
+			} elseif ( ! empty( $item['badge'] ) && 'tareas' === $item['badge'] && $tareas_badge > 0 ) {
+				$badge_html = '<span class="promotur-nav__badge">' . esc_html( $tareas_badge ) . '</span>';
 			}
 			printf(
 				'<a class="promotur-nav__item%s" href="%s"%s>%s<span class="promotur-nav__label">%s</span>%s</a>',

@@ -146,7 +146,7 @@ function promotur_nav_items() {
 		array( 'route' => 'panel/mis-contenidos', 'label' => __( 'Mis contenidos', 'caaguazu-portal' ),'icon' => 'doc',    'cap' => 'promotur_create_draft' ),
 		array( 'route' => 'panel/editor',         'label' => __( 'Nueva ficha', 'caaguazu-portal' ),   'icon' => 'edit',   'cap' => 'promotur_edit_destino' ),
 		array( 'route' => 'panel/revision',       'label' => __( 'Cola de revisión', 'caaguazu-portal' ),'icon' => 'inbox','cap' => 'promotur_review_content', 'badge' => 'revision' ),
-		array( 'route' => 'panel/tareas',         'label' => __( 'Tareas', 'caaguazu-portal' ),         'icon' => 'tasks',  'cap' => 'promotur_view_own_tasks' ),
+		array( 'route' => 'panel/tareas',         'label' => __( 'Tareas', 'caaguazu-portal' ),         'icon' => 'tasks',  'cap' => 'promotur_view_own_tasks', 'badge' => 'tareas' ),
 		array( 'route' => 'panel/curaduria',      'label' => __( 'Curaduría', 'caaguazu-portal' ),      'icon' => 'star',   'cap' => 'promotur_curate_featured' ),
 		array( 'route' => 'panel/moderacion',     'label' => __( 'Moderación', 'caaguazu-portal' ),     'icon' => 'shield', 'cap' => 'promotur_moderate' ),
 		array( 'route' => 'panel/equipo',         'label' => __( 'Equipo', 'caaguazu-portal' ),         'icon' => 'team',   'cap' => 'promotur_manage_team' ),

@@ -24,6 +24,8 @@ class PROMOTUR_Public {
 		add_shortcode( 'promotur_explorar', array( $this, 'sc_explorar' ) );
 		add_shortcode( 'promotur_itinerario', array( $this, 'sc_itinerario' ) );
 		add_shortcode( 'promotur_contacto', array( $this, 'sc_contacto' ) );
+		add_shortcode( 'promotur_home', array( $this, 'sc_home' ) );
+		add_shortcode( 'promotur_destacados', array( $this, 'sc_destacados' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'register_public' ) );
 	}
 
@@ -179,6 +181,11 @@ JS;
 
 		$query = new WP_Query( $args );
 
+		// Registrar búsquedas sin resultado (huecos de contenido).
+		if ( '' !== $q && ! $query->have_posts() && class_exists( 'PROMOTUR_Stats' ) ) {
+			PROMOTUR_Stats::log_empty_search( $q );
+		}
+
 		ob_start();
 		?>
 		<div class="promotur-explorar">
@@ -300,6 +307,105 @@ JS;
 			<span class="promotur-form-msg" data-form-msg aria-live="polite"></span>
 		</form>
 		<?php
+		return ob_get_clean();
+	}
+
+	/**
+	 * Tarjeta de destino reutilizable.
+	 */
+	private static function card( $id ) {
+		$pid = get_post_meta( $id, '_promotur_portada', true );
+		$img = $pid ? wp_get_attachment_image_url( (int) $pid, 'medium_large' ) : get_the_post_thumbnail_url( $id, 'medium_large' );
+		$g   = get_post_meta( $id, '_promotur_gancho', true );
+		ob_start();
+		?>
+		<a class="promotur-card promotur-card--link promotur-vitrina__card" href="<?php echo esc_url( get_permalink( $id ) ); ?>">
+			<span class="promotur-vitrina__media"<?php echo $img ? ' style="background-image:url(' . esc_url( $img ) . ')"' : ''; ?>></span>
+			<span class="promotur-vitrina__body">
+				<span class="promotur-row__title"><?php echo esc_html( get_the_title( $id ) ); ?></span>
+				<?php if ( $g ) : ?><span class="promotur-muted"><?php echo esc_html( $g ); ?></span><?php endif; ?>
+			</span>
+		</a>
+		<?php
+		return ob_get_clean();
+	}
+
+	/**
+	 * Grid de destacados (cae a "recién publicado" si no hay curaduría).
+	 */
+	public function sc_destacados( $atts ) {
+		self::ensure_assets();
+		$ids = PROMOTUR_Curaduria::destacados();
+		if ( empty( $ids ) ) {
+			$ids = get_posts( array( 'post_type' => PROMOTUR_Destinos::CPT, 'post_status' => 'publish', 'posts_per_page' => 6, 'fields' => 'ids' ) );
+		}
+		if ( empty( $ids ) ) { return ''; }
+		$out = '<div class="promotur-grid promotur-grid--3 promotur-vitrina">';
+		foreach ( $ids as $id ) {
+			if ( 'publish' === get_post_status( $id ) ) { $out .= self::card( $id ); }
+		}
+		return $out . '</div>';
+	}
+
+	/**
+	 * Home pública curada: banner + hero + destacados + recién publicado + mapa.
+	 */
+	public function sc_home( $atts ) {
+		self::ensure_assets();
+		$destacados = array_filter( PROMOTUR_Curaduria::destacados(), function ( $id ) { return 'publish' === get_post_status( $id ); } );
+
+		ob_start();
+		echo '<div class="promotur-homeblocks">';
+
+		// Banner de temporada.
+		if ( PROMOTUR_Curaduria::banner_visible() ) {
+			$b = PROMOTUR_Curaduria::banner();
+			$tag = $b['url'] ? 'a' : 'div';
+			printf(
+				'<%1$s class="promotur-banner"%2$s><strong>%3$s</strong>%4$s</%1$s>',
+				$tag,
+				$b['url'] ? ' href="' . esc_url( $b['url'] ) . '"' : '',
+				esc_html( $b['title'] ),
+				$b['text'] ? ' <span>' . esc_html( $b['text'] ) . '</span>' : ''
+			);
+		}
+
+		// Hero = primer destacado.
+		if ( ! empty( $destacados ) ) {
+			$hero = array_shift( $destacados );
+			$pid  = get_post_meta( $hero, '_promotur_portada', true );
+			$img  = $pid ? wp_get_attachment_image_url( (int) $pid, 'large' ) : get_the_post_thumbnail_url( $hero, 'large' );
+			?>
+			<a class="promotur-hero" href="<?php echo esc_url( get_permalink( $hero ) ); ?>"<?php echo $img ? ' style="background-image:linear-gradient(0deg,rgba(0,0,0,.55),rgba(0,0,0,.1)),url(' . esc_url( $img ) . ')"' : ''; ?>>
+				<span class="promotur-hero__eyebrow"><?php esc_html_e( 'Destacado', 'caaguazu-portal' ); ?></span>
+				<span class="promotur-hero__title"><?php echo esc_html( get_the_title( $hero ) ); ?></span>
+				<span class="promotur-hero__gancho"><?php echo esc_html( get_post_meta( $hero, '_promotur_gancho', true ) ); ?></span>
+			</a>
+			<?php
+		}
+
+		// Resto de destacados.
+		if ( ! empty( $destacados ) ) {
+			echo '<h2 class="text-h3">' . esc_html__( 'Qué no te podés perder', 'caaguazu-portal' ) . '</h2>';
+			echo '<div class="promotur-grid promotur-grid--3 promotur-vitrina">';
+			foreach ( $destacados as $id ) { echo self::card( $id ); } // phpcs:ignore WordPress.Security.EscapeOutput
+			echo '</div>';
+		}
+
+		// Recién publicado.
+		$recientes = get_posts( array( 'post_type' => PROMOTUR_Destinos::CPT, 'post_status' => 'publish', 'posts_per_page' => 3, 'fields' => 'ids' ) );
+		if ( $recientes ) {
+			echo '<h2 class="text-h3">' . esc_html__( 'Recién publicado', 'caaguazu-portal' ) . '</h2>';
+			echo '<div class="promotur-grid promotur-grid--3 promotur-vitrina">';
+			foreach ( $recientes as $id ) { echo self::card( $id ); } // phpcs:ignore WordPress.Security.EscapeOutput
+			echo '</div>';
+		}
+
+		// Mapa.
+		echo '<h2 class="text-h3">' . esc_html__( 'En el mapa', 'caaguazu-portal' ) . '</h2>';
+		echo do_shortcode( '[promotur_mapa alto="420px"]' );
+
+		echo '</div>';
 		return ob_get_clean();
 	}
 }

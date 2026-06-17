@@ -34,7 +34,54 @@
 		initEditor();
 		initReview();
 		initModeration();
+		initGestion();
 	});
+
+	/* ---------- Gestión (tareas, nivel) ---------- */
+	function initGestion() {
+		// Crear tarea.
+		var tform = document.querySelector('[data-tarea-form]');
+		if (tform) {
+			tform.addEventListener('submit', function (e) {
+				e.preventDefault();
+				var msg = tform.querySelector('[data-form-msg]');
+				var fd = new FormData(tform);
+				if (msg) { msg.textContent = i18n.sending; msg.className = 'promotur-form-msg'; }
+				ajax('create_tarea', fd).then(function (r) {
+					if (!r.success) { if (msg) { msg.textContent = (r.data && r.data.message) || i18n.error; msg.className = 'promotur-form-msg is-error'; } return; }
+					window.location.reload();
+				}).catch(function () { if (msg) { msg.textContent = i18n.error; msg.className = 'promotur-form-msg is-error'; } });
+			});
+		}
+		// Reclamar / completar tareas.
+		document.querySelectorAll('[data-tarea]').forEach(function (card) {
+			var id = card.getAttribute('data-tarea');
+			card.querySelectorAll('[data-op]').forEach(function (btn) {
+				btn.addEventListener('click', function () {
+					var map = { claim: 'claim_tarea', complete: 'complete_tarea' };
+					var action = map[btn.getAttribute('data-op')];
+					if (!action) { return; }
+					btn.disabled = true;
+					ajax(action, { id: id }).then(function (r) {
+						if (r.success) { window.location.reload(); }
+						else { btn.disabled = false; alert((r.data && r.data.message) || i18n.error); }
+					}).catch(function () { btn.disabled = false; });
+				});
+			});
+		});
+		// Guardar nivel de confianza.
+		document.querySelectorAll('[data-user]').forEach(function (card) {
+			var save = card.querySelector('[data-nivel-save]');
+			if (!save) { return; }
+			save.addEventListener('click', function () {
+				var sel = card.querySelector('[data-nivel-select]');
+				var msg = card.querySelector('[data-form-msg]');
+				ajax('set_nivel', { user_id: card.getAttribute('data-user'), level: sel ? sel.value : '' }).then(function (r) {
+					if (msg) { msg.textContent = r.success ? (r.data.message || i18n.saved) : ((r.data && r.data.message) || i18n.error); msg.className = 'promotur-form-msg ' + (r.success ? 'is-success' : 'is-error'); }
+				});
+			});
+		});
+	}
 
 	/* ---------- Moderación (panel) ---------- */
 	function initModeration() {

@@ -43,6 +43,10 @@ require_once PROMOTUR_DIR . 'includes/class-consultas.php';
 require_once PROMOTUR_DIR . 'includes/class-seo.php';
 require_once PROMOTUR_DIR . 'includes/class-public.php';
 require_once PROMOTUR_DIR . 'includes/class-public-ajax.php';
+require_once PROMOTUR_DIR . 'includes/class-curaduria.php';
+require_once PROMOTUR_DIR . 'includes/class-tareas.php';
+require_once PROMOTUR_DIR . 'includes/class-stats.php';
+require_once PROMOTUR_DIR . 'includes/class-gestion-ajax.php';
 
 /**
  * Arranque del plugin.
@@ -63,6 +67,10 @@ function promotur_boot() {
 	PROMOTUR_SEO::instance();
 	PROMOTUR_Public::instance();
 	PROMOTUR_Public_Ajax::instance();
+	PROMOTUR_Curaduria::instance();
+	PROMOTUR_Tareas::instance();
+	PROMOTUR_Stats::instance();
+	PROMOTUR_Gestion_Ajax::instance();
 
 	// Auto re-flush de rewrite rules si cambió la versión (upgrades sin re-activar).
 	if ( get_option( 'promotur_version' ) !== PROMOTUR_VERSION ) {

@@ -16,6 +16,9 @@ if ( class_exists( 'PROMOTUR_Roles' ) ) {
 delete_option( 'promotur_version' );
 delete_option( 'promotur_db_version' );
 delete_option( 'promotur_invites' );
+delete_option( 'promotur_destacados' );
+delete_option( 'promotur_banner' );
+delete_option( 'promotur_empty_searches' );
 
 // Limpia las marcas de lectura de notificaciones.
 delete_metadata( 'user', 0, 'promotur_notifs_read_at', '', true );

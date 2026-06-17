@@ -329,6 +329,18 @@ html.promotur-no-splash .promotur-splash{ display:none; }
 .promotur-itin__ctrls{ display:flex; gap:4px; }
 .promotur-itin__ctrls .promotur-iconbtn{ width:32px; height:32px; border:1px solid var(--promotur-border); }
 .promotur-mod p{ margin:.4rem 0; }
+.promotur-mod{ display:flex; flex-direction:column; gap:8px; }
+.promotur-newtask summary{ cursor:pointer; }
+.promotur-newtask .promotur-form{ margin-top:1rem; }
+
+/* ---------- Fase 3: home pública curada ---------- */
+.promotur-homeblocks{ display:flex; flex-direction:column; gap:1.2rem; }
+.promotur-banner{ display:block; background:var(--promotur-brand); color:var(--promotur-on-brand); padding:14px 18px; border-radius:var(--promotur-radius); text-decoration:none; }
+.promotur-banner span{ opacity:.92; margin-left:.4em; }
+.promotur-hero{ display:flex; flex-direction:column; justify-content:flex-end; min-height:320px; padding:24px; border-radius:var(--promotur-radius); background:var(--promotur-surface-alt) center/cover no-repeat; color:#fff; text-decoration:none; }
+.promotur-hero__eyebrow{ text-transform:uppercase; letter-spacing:.08em; font-size:.72rem; font-weight:700; opacity:.9; }
+.promotur-hero__title{ font-family:var(--promotur-font-display); font-size:2rem; font-weight:800; line-height:1.1; }
+.promotur-hero__gancho{ opacity:.92; }
 
 /* ---------- Reduced motion ---------- */
 @media (prefers-reduced-motion: reduce){
