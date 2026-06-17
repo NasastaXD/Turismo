@@ -14,6 +14,7 @@ if ( class_exists( 'PROMOTUR_Roles' ) ) {
 }
 
 delete_option( 'promotur_version' );
+delete_option( 'promotur_db_version' );
 delete_option( 'promotur_invites' );
 
 // Limpia las marcas de lectura de notificaciones.

@@ -42,6 +42,19 @@ instalable como PWA, con modo claro/oscuro y los colores del sitio heredados ví
 
 Convive con el plugin `caaguazu-locales` sin colisiones (prefijos distintos).
 
+== Auto-actualización ==
+
+El plugin se actualiza desde wp-admin sin pasar por WordPress.org, usando
+plugin-update-checker (vendoreado en `vendor/`) contra los GitHub Releases del
+repositorio. Al hacer push a `main`, el workflow `.github/workflows/publish-releases.yml`
+lee la versión del header, empaqueta `caaguazu-portal.zip` y publica el release
+`v{version}`; el checker lo detecta (~cada 12 h) y ofrece la actualización.
+
+* Versión en un solo lugar: header `Version:` + constante `PROMOTUR_VERSION` (semver).
+* Migraciones de BD: incrementar `PROMOTUR_DB_VERSION`; corren solas en `admin_init`
+  vía `promotur_run_migrations()`.
+* Repo privado: definir `PROMOTUR_GITHUB_TOKEN` (PAT de solo lectura) en `wp-config.php`.
+
 == Changelog ==
 
 = 1.0.0 =

@@ -17,6 +17,10 @@ class PROMOTUR_Install {
 		PROMOTUR_Router::add_rewrite_rules();
 		flush_rewrite_rules();
 		update_option( 'promotur_version', PROMOTUR_VERSION );
+		// Marca la DB como actualizada a la versión actual (migraciones acumulativas después).
+		if ( false === get_option( 'promotur_db_version', false ) ) {
+			update_option( 'promotur_db_version', PROMOTUR_DB_VERSION );
+		}
 	}
 
 	/**
