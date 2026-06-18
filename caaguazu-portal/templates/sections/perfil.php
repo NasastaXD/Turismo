@@ -88,7 +88,7 @@ $body = function () use ( $user, $pub, $total_views, $is_mini ) {
 	<?php endif; ?>
 
 	<p class="promotur-muted promotur-mt">
-		<a href="<?php echo esc_url( admin_url( 'profile.php' ) ); ?>"><?php esc_html_e( 'Editar mi perfil en WordPress →', 'caaguazu-portal' ); ?></a>
+		<a class="promotur-pjax-skip" href="<?php echo esc_url( promotur_url( 'salir' ) ); ?>"><?php esc_html_e( 'Cerrar sesión', 'caaguazu-portal' ); ?></a>
 	</p>
 	<?php
 };

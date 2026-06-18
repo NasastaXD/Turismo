@@ -25,18 +25,118 @@
 	}
 
 	ready(function () {
+		// Globales (una sola vez, viven fuera del área de contenido).
 		initSplash();
 		initTheme();
 		initDrawer();
 		initDropdowns();
 		initInstall();
 		initServiceWorker();
+		// Específicos del contenido (se re-ejecutan tras cada navegación in-place).
+		initContent();
+		// Navegación tipo app (sin recargar toda la página).
+		initPjax();
+	});
+
+	/** Inicializadores que dependen del HTML del área de contenido. */
+	function initContent() {
 		initEditor();
 		initReview();
 		initModeration();
 		initGestion();
 		initCaptura();
-	});
+	}
+
+	/* ---------- Navegación in-place (PJAX) ---------- */
+	function initPjax() {
+		var main = document.getElementById('promotur-content');
+		if (!main || !window.history || !window.fetch || !window.DOMParser) { return; }
+
+		var panelBase = (CFG.urls && CFG.urls.panel) || '';
+		var busy = false;
+
+		function samePanel(href) {
+			if (!href || !panelBase) { return false; }
+			try {
+				var u = new URL(href, location.origin);
+				if (u.origin !== location.origin) { return false; }
+				var base = new URL(panelBase, location.origin);
+				// Solo rutas bajo /panel (no login, salir, fichas públicas, etc.).
+				return u.pathname === base.pathname || u.pathname.indexOf(base.pathname.replace(/\/$/, '') + '/') === 0 || u.pathname.indexOf(base.pathname) === 0;
+			} catch (e) { return false; }
+		}
+
+		function eligible(a) {
+			if (!a || a.target === '_blank' || a.hasAttribute('download')) { return false; }
+			if (a.classList.contains('promotur-pjax-skip')) { return false; }
+			var href = a.getAttribute('href');
+			if (!href || href.charAt(0) === '#' || /^(mailto:|tel:|javascript:)/i.test(href)) { return false; }
+			return samePanel(a.href);
+		}
+
+		function setActive(path) {
+			var clean = path.replace(/\/$/, '');
+			document.querySelectorAll('.promotur-nav__item, .promotur-bottomnav__item').forEach(function (a) {
+				if (!a.getAttribute || !a.getAttribute('href')) { return; }
+				var ap;
+				try { ap = new URL(a.href).pathname.replace(/\/$/, ''); } catch (e) { return; }
+				var isHome = /\/panel$/.test(ap);
+				var active = isHome ? /\/panel$/.test(clean) : (clean === ap || clean.indexOf(ap + '/') === 0);
+				a.classList.toggle('is-active', active);
+			});
+		}
+
+		function swap(html, url) {
+			var doc = new DOMParser().parseFromString(html, 'text/html');
+			var next = doc.getElementById('promotur-content');
+			if (!next) { window.location.href = url; return; }
+			main.innerHTML = next.innerHTML;
+			// Título del documento y de la topbar.
+			if (doc.title) { document.title = doc.title; }
+			var newTitle = doc.querySelector('.promotur-topbar__title');
+			var curTitle = document.querySelector('.promotur-topbar__title');
+			if (newTitle && curTitle) { curTitle.textContent = newTitle.textContent; }
+			setActive(new URL(url, location.origin).pathname);
+			main.scrollTop = 0;
+			window.scrollTo(0, 0);
+			if (typeof main.focus === 'function') { main.focus(); }
+			initContent();
+		}
+
+		function go(url, push) {
+			if (busy) { return; }
+			busy = true;
+			document.body.classList.add('promotur-loading');
+			fetch(url, { credentials: 'same-origin', headers: { 'X-Requested-With': 'promotur-pjax' } })
+				.then(function (r) {
+					if (!r.ok) { throw new Error('http'); }
+					return r.text();
+				})
+				.then(function (html) {
+					if (push) { history.pushState({ promotur: 1 }, '', url); }
+					swap(html, url);
+				})
+				.catch(function () { window.location.href = url; })
+				.then(function () { busy = false; document.body.classList.remove('promotur-loading'); });
+		}
+
+		document.addEventListener('click', function (e) {
+			if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) { return; }
+			var a = e.target.closest ? e.target.closest('a') : null;
+			if (!a || !eligible(a)) { return; }
+			e.preventDefault();
+			if (a.href === location.href) { return; }
+			// En móvil, cerrar el drawer al navegar.
+			document.body.classList.remove('promotur-nav-open');
+			var bd = document.querySelector('[data-drawer-backdrop]');
+			if (bd) { bd.hidden = true; }
+			go(a.href, true);
+		});
+
+		window.addEventListener('popstate', function () {
+			if (samePanel(location.href)) { go(location.href, false); }
+		});
+	}
 
 	/* ---------- Salida de campo (captura offline) ---------- */
 	function initCaptura() {

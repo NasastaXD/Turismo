@@ -401,6 +401,42 @@ html.promotur-no-splash .promotur-splash{ display:none; }
 /* Modo claro/blanco (default): superficies limpias y bordes nítidos. */
 :root{ --promotur-shadow:0 1px 2px rgba(20,30,25,.05), 0 8px 22px rgba(20,30,25,.06); }
 
+/* ---------- Iteración 5: navegación tipo app + densidad en móvil ---------- */
+/* Transición suave del contenido al navegar in-place (sin recargar toda la página). */
+.promotur-content{ transition:opacity .18s ease; }
+body.promotur-loading .promotur-content{ opacity:.55; }
+/* Barra de progreso fina arriba mientras carga la siguiente vista. */
+body.promotur-loading::after{
+	content:""; position:fixed; top:0; left:0; height:3px; width:100%; z-index:200;
+	background:var(--promotur-brand); transform-origin:left;
+	animation:promoturBar 1s ease-in-out infinite;
+}
+@keyframes promoturBar{ 0%{ transform:scaleX(0); } 60%{ transform:scaleX(.75); } 100%{ transform:scaleX(1); opacity:.4; } }
+
+/* El toggle de tema siempre visible y cómodo. */
+.promotur-themebtn{ display:grid; }
+
+/* Densidad en teléfonos: menos padding, tipografía más contenida, menos scroll. */
+@media (max-width:899px){
+	.promotur-content{ padding:16px 14px 84px; }
+	.promotur-h2{ font-size:1.2rem; margin:.1em 0 .5em; }
+	.promotur-h3{ font-size:1rem; margin:1.1em 0 .5em; }
+	.promotur-card{ padding:14px; }
+	.promotur-grid{ gap:10px; }
+	.promotur-stat__n{ font-size:1.5rem; }
+	.promotur-quick{ padding:12px 14px; font-size:.92rem; }
+	.promotur-pagehead{ margin-bottom:.7rem; }
+	.promotur-profile{ gap:12px; margin-bottom:1rem; }
+	.promotur-avatar--lg{ width:54px; height:54px; font-size:1.2rem; }
+}
+/* En pantallas chicas, el "pulso" y los stats van en 2 columnas (más denso). */
+@media (max-width:559px){
+	.promotur-pulse.promotur-grid--3{ grid-template-columns:repeat(2,1fr); }
+	.promotur-pulse .promotur-stat__n{ font-size:1.35rem; }
+	.promotur-pulse .promotur-stat__label{ font-size:.76rem; }
+	.promotur-pulse .promotur-card{ padding:12px; }
+}
+
 /* ---------- Print ---------- */
 @media print{
 	.promotur-sidebar,.promotur-topbar,.promotur-splash,.promotur-backdrop,.promotur-bottomnav,

@@ -17,8 +17,8 @@ $brand_hex = apply_filters( 'promotur_brand_hex', '#155c33' );
 <meta charset="<?php bloginfo( 'charset' ); ?>">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-<?php // Anti-parpadeo: setear data-theme ANTES del primer paint. ?>
-<script>(function(){try{var t=localStorage.getItem('promotur-theme');if(t==='dark'||(t===null&&window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();</script>
+<?php // Anti-parpadeo: setear data-theme ANTES del primer paint. Modo CLARO por defecto; oscuro solo si el usuario lo eligió. ?>
+<script>(function(){try{if(localStorage.getItem('promotur-theme')==='dark'){document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();</script>
 
 <?php // Splash una vez por sesión. ?>
 <script>(function(){try{if(sessionStorage.getItem('promotur-splash')){document.documentElement.classList.add('promotur-no-splash');}else{sessionStorage.setItem('promotur-splash','1');}}catch(e){document.documentElement.classList.add('promotur-no-splash');}})();</script>

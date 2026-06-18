@@ -18,6 +18,17 @@ class PROMOTUR_Assets {
 
 	private function __construct() {
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue' ) );
+		// El panel es una app propia: nada de la barra de admin de WordPress encima.
+		add_action( 'wp', array( $this, 'maybe_hide_admin_bar' ) );
+	}
+
+	/**
+	 * Oculta la barra de administración de WP dentro del portal (sin "olor" a WordPress).
+	 */
+	public function maybe_hide_admin_bar() {
+		if ( $this->is_portal_route() ) {
+			add_filter( 'show_admin_bar', '__return_false' );
+		}
 	}
 
 	/**

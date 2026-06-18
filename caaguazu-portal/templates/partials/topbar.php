@@ -26,9 +26,9 @@ $q       = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) )
 
 		<?php echo PROMOTUR_I18n::switcher(); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 
-		<button type="button" class="promotur-iconbtn" data-theme-toggle aria-label="<?php esc_attr_e( 'Cambiar tema', 'caaguazu-portal' ); ?>">
+		<button type="button" class="promotur-iconbtn promotur-themebtn" data-theme-toggle aria-label="<?php esc_attr_e( 'Cambiar entre modo claro y oscuro', 'caaguazu-portal' ); ?>" title="<?php esc_attr_e( 'Modo claro / oscuro', 'caaguazu-portal' ); ?>">
 			<span class="promotur-theme-light"><?php echo promotur_icon( 'sun' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
-			<span class="promotur-theme-dark"><?php echo promotur_icon( 'star' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
+			<span class="promotur-theme-dark"><?php echo promotur_icon( 'moon' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
 		</button>
 
 		<div class="promotur-notifs" data-dropdown>
