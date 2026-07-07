@@ -3,7 +3,7 @@
  * Plugin Name:       Caaguazú Portal — Promotores Turísticos
  * Plugin URI:        https://turismo.caaguazu.net
  * Description:       Panel autenticado tipo app (sidebar + topbar + contenido, instalable como PWA) sobre rutas propias, con flujo editorial borrador → revisión → publicación para el Portal de Promotores Turísticos. Hereda los colores del sitio vía tokens CSS.
- * Version:           1.1.1
+ * Version:           1.1.2
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Municipalidad de Caaguazú
@@ -16,7 +16,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'PROMOTUR_VERSION', '1.1.1' );
+define( 'PROMOTUR_VERSION', '1.1.2' );
 define( 'PROMOTUR_DB_VERSION', 2 ); // se incrementa cuando cambia la estructura de datos.
 define( 'PROMOTUR_FILE', __FILE__ );
 define( 'PROMOTUR_DIR', plugin_dir_path( __FILE__ ) );
@@ -81,16 +81,27 @@ function promotur_boot() {
 		PROMOTUR_Admin::instance();
 	}
 
-	// Auto re-flush de rewrite rules si cambió la versión (upgrades sin re-activar).
-	if ( get_option( 'promotur_version' ) !== PROMOTUR_VERSION ) {
-		PROMOTUR_Router::add_rewrite_rules();
-		flush_rewrite_rules();
-		update_option( 'promotur_version', PROMOTUR_VERSION );
-	}
-
 	promotur_init_updater();
 }
 add_action( 'plugins_loaded', 'promotur_boot' );
+
+/**
+ * Auto re-flush de rewrite rules si cambió la versión (upgrades sin re-activar).
+ * En `admin_init`, no en `plugins_loaded`: ese hook corre en CADA visita pública
+ * (antes de que los CPTs terminen de registrar sus propias reglas en `init`), así
+ * que un flush ahí reconstruye el rewrite_rules con reglas incompletas y lo hace
+ * en el camino caliente de cualquier visitante anónimo. Mismo patrón de catch-up
+ * ya usado en caaguazu-turismo/includes/tourism-seeder.php.
+ */
+function promotur_maybe_flush_rewrite_rules() {
+	if ( get_option( 'promotur_version' ) === PROMOTUR_VERSION ) {
+		return;
+	}
+	PROMOTUR_Router::add_rewrite_rules();
+	flush_rewrite_rules();
+	update_option( 'promotur_version', PROMOTUR_VERSION );
+}
+add_action( 'admin_init', 'promotur_maybe_flush_rewrite_rules' );
 
 /**
  * Traducciones.
