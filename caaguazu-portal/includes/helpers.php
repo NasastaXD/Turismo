@@ -8,11 +8,18 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 /**
  * URL absoluta a una ruta del portal/auth.
  *
+ * El panel vive bajo /turismo/panel (no en la raíz) — las demás rutas
+ * (login, registro, recuperar, salir) quedan como estaban.
+ *
  * @param string $route ej. 'panel/equipo', 'login'
  * @return string
  */
 function promotur_url( $route = '' ) {
-	return home_url( '/' . ltrim( (string) $route, '/' ) );
+	$route = ltrim( (string) $route, '/' );
+	if ( 'panel' === $route || 0 === strpos( $route, 'panel/' ) ) {
+		$route = 'turismo/' . $route;
+	}
+	return home_url( '/' . $route );
 }
 
 /**

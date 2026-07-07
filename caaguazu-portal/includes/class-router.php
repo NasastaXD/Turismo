@@ -60,9 +60,9 @@ class PROMOTUR_Router {
 		// Link de invitación → registro con token.
 		add_rewrite_rule( '^i/([^/]+)/?$', 'index.php?promotur_route=registro&promotur_token=$matches[1]', 'top' );
 
-		// Panel.
-		add_rewrite_rule( '^panel/?$',       'index.php?promotur_route=panel', 'top' );
-		add_rewrite_rule( '^panel/(.+?)/?$', 'index.php?promotur_route=panel&promotur_sub=$matches[1]', 'top' );
+		// Panel (bajo /turismo/ para no vivir en la raíz del sitio).
+		add_rewrite_rule( '^turismo/panel/?$',       'index.php?promotur_route=panel', 'top' );
+		add_rewrite_rule( '^turismo/panel/(.+?)/?$', 'index.php?promotur_route=panel&promotur_sub=$matches[1]', 'top' );
 	}
 
 	/**

@@ -34,7 +34,7 @@ class PROMOTUR_PWA {
 		$data = array(
 			'name'             => get_bloginfo( 'name' ) . ' — Promotores',
 			'short_name'       => 'Promotores',
-			'start_url'        => '/panel',
+			'start_url'        => promotur_url( 'panel' ),
 			'scope'            => '/',
 			'display'          => 'standalone',
 			'orientation'      => 'portrait',
