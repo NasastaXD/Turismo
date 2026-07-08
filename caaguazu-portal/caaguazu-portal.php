@@ -3,7 +3,7 @@
  * Plugin Name:       Caaguazú Portal — Promotores Turísticos
  * Plugin URI:        https://turismo.caaguazu.net
  * Description:       Panel autenticado tipo app (sidebar + topbar + contenido, instalable como PWA) sobre rutas propias, con flujo editorial borrador → revisión → publicación para el Portal de Promotores Turísticos. Hereda los colores del sitio vía tokens CSS.
- * Version:           1.1.2
+ * Version:           1.1.3
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Municipalidad de Caaguazú
@@ -16,7 +16,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'PROMOTUR_VERSION', '1.1.2' );
+define( 'PROMOTUR_VERSION', '1.1.3' );
 define( 'PROMOTUR_DB_VERSION', 2 ); // se incrementa cuando cambia la estructura de datos.
 define( 'PROMOTUR_FILE', __FILE__ );
 define( 'PROMOTUR_DIR', plugin_dir_path( __FILE__ ) );
@@ -51,6 +51,7 @@ require_once PROMOTUR_DIR . 'includes/class-tareas.php';
 require_once PROMOTUR_DIR . 'includes/class-stats.php';
 require_once PROMOTUR_DIR . 'includes/class-gestion-ajax.php';
 require_once PROMOTUR_DIR . 'includes/class-i18n.php';
+require_once PROMOTUR_DIR . 'includes/nav-integration.php';
 
 /**
  * Arranque del plugin.
