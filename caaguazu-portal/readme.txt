@@ -3,7 +3,7 @@ Contributors: municipalidadcaaguazu
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.1.3
 License: GPLv2 or later
 
 Panel autenticado tipo app (PWA) con enrutador propio, login propio, roles y un MVP editorial (fichas de destino con flujo borrador → revisión → publicación).
@@ -56,6 +56,9 @@ lee la versión del header, empaqueta `caaguazu-portal.zip` y publica el release
 * Repo privado: definir `PROMOTUR_GITHUB_TOKEN` (PAT de solo lectura) en `wp-config.php`.
 
 == Changelog ==
+
+= 1.1.3 =
+* Integración con el shell propio de Turismo del theme Caaguazú (`caaguazu_tourism_shell_items`): agrega "Destinos" (desplegable con las categorías reales de `promotur_categoria`) y, solo para usuarios logueados con el permiso `promotur_view_panel`, un link directo al panel de promotor.
 
 = 1.1.0 =
 * Registro INVITE-ONLY con teléfono obligatorio; invitaciones en tabla custom con link corto /i/<token>.

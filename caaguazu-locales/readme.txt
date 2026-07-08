@@ -4,7 +4,7 @@ Tags: tourism, reviews, whatsapp, maps, booking
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -43,6 +43,9 @@ En la ficha individual de un local (`single`) las reseñas, la reserva y la info
 El plugin consulta `updates/caaguazu-locales.json` del repositorio. Subí ahí un JSON con `version` y `download_url` apuntando al .zip de la nueva versión y WordPress ofrecerá la actualización automáticamente. Filtros disponibles: `cgz_plugin_update_manifest`.
 
 == Changelog ==
+
+= 1.1.0 =
+* Integración con el shell propio de Turismo del theme Caaguazú (`caaguazu_tourism_shell_items`): agrega un ítem "Dónde ir" con un link por tipo de local (restaurante, hotel, comercio, atracción) + "Ver todos". Suma también el filtrado real por tipo en el archivo del CPT (`?tipo=restaurante`), vía una query var pública y `pre_get_posts`.
 
 = 1.0.0 =
 * Versión inicial: reservas por WhatsApp, mapa editable, reseñas con cuentas, panel de dueño y autoactualización.
