@@ -57,12 +57,16 @@ class PROMOTUR_Tareas {
 		if ( '' === $titulo ) {
 			return new WP_Error( 'empty', __( 'La tarea necesita un título.', 'caaguazu-portal' ) );
 		}
+		// post_author: el usuario de servicio (ver caaguazu_service_user_id()) —
+		// ninguna cuenta del panel es ya un usuario de WordPress. La lista de
+		// asignados (_promotur_asignados) son IDs de cuenta y es lo único que
+		// esta clase usa para resolver "de quién es esta tarea".
 		$id = wp_insert_post( array(
 			'post_type'    => self::CPT,
 			'post_status'  => 'private',
 			'post_title'   => $titulo,
 			'post_content' => sanitize_textarea_field( $data['detalle'] ?? '' ),
-			'post_author'  => get_current_user_id(),
+			'post_author'  => function_exists( 'caaguazu_service_user_id' ) ? caaguazu_service_user_id() : get_current_user_id(),
 		) );
 		if ( is_wp_error( $id ) ) { return $id; }
 
@@ -95,11 +99,12 @@ class PROMOTUR_Tareas {
 	}
 
 	/**
-	 * Tareas visibles para un usuario: si gestiona, todas; si no, las suyas + huecos abiertos.
+	 * Tareas visibles para una cuenta: si gestiona, todas; si no, las suyas + huecos abiertos.
 	 *
+	 * @param int $account_id ID de cuenta (0 = sin cuenta propia; bypass de administrador de WP).
 	 * @return WP_Post[]
 	 */
-	public static function visible_for( $user_id ) {
+	public static function visible_for( $account_id ) {
 		$all = get_posts( array(
 			'post_type'      => self::CPT,
 			'post_status'    => 'private',
@@ -107,13 +112,16 @@ class PROMOTUR_Tareas {
 			'orderby'        => 'date',
 			'order'          => 'DESC',
 		) );
-		if ( user_can( $user_id, 'promotur_assign_tasks' ) ) {
+		$can_assign = $account_id > 0
+			? caaguazu_account_can( 'promotor', 'promotur_assign_tasks', $account_id )
+			: ( function_exists( 'caaguazu_wp_admin_bypass' ) && caaguazu_wp_admin_bypass() );
+		if ( $can_assign ) {
 			return $all;
 		}
 		$out = array();
 		foreach ( $all as $t ) {
 			$tipo = get_post_meta( $t->ID, '_promotur_tipo', true );
-			if ( self::is_assigned( $t->ID, $user_id ) || ( 'hueco' === $tipo && 'completada' !== self::get_estado( $t->ID ) ) ) {
+			if ( self::is_assigned( $t->ID, $account_id ) || ( 'hueco' === $tipo && 'completada' !== self::get_estado( $t->ID ) ) ) {
 				$out[] = $t;
 			}
 		}

@@ -37,7 +37,7 @@ class PROMOTUR_Shell {
 
 		// Capability de la sección.
 		$cap = $sections[ $section ];
-		if ( ! current_user_can( $cap ) ) {
+		if ( ! caaguazu_account_can( 'promotor', $cap ) ) {
 			wp_die(
 				esc_html__( 'No tenés permiso para ver esta sección.', 'caaguazu-portal' ),
 				esc_html__( 'Acceso denegado', 'caaguazu-portal' ),

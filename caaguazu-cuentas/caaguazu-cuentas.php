@@ -3,7 +3,7 @@
  * Plugin Name:       Caaguazú Cuentas — Sistema de cuentas universal
  * Plugin URI:        https://turismo.caaguazu.net
  * Description:       Sistema de cuentas universal, propio y separado de los usuarios de WordPress (para maximizar seguridad). Provee identidad (email + contraseña), sesión propia firmada y un modelo de permisos por panel — el Promotor turístico hoy, y cualquier panel futuro con permisos especiales. Otros plugins consumen su API pública (caaguazu_current_account(), caaguazu_account_can()).
- * Version:           0.1.0
+ * Version:           0.2.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Municipalidad de Caaguazú
@@ -16,7 +16,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'CAAGUAZU_CUENTAS_VERSION', '0.1.0' );
+define( 'CAAGUAZU_CUENTAS_VERSION', '0.2.0' );
 define( 'CAAGUAZU_CUENTAS_DB_VERSION', 1 ); // se incrementa cuando cambia la estructura de datos.
 define( 'CAAGUAZU_CUENTAS_FILE', __FILE__ );
 define( 'CAAGUAZU_CUENTAS_DIR', plugin_dir_path( __FILE__ ) );

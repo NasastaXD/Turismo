@@ -13,7 +13,7 @@ $candidatos = array(
 	array( 'icon' => 'inbox', 'route' => 'panel/revision',       'label' => __( 'Revisar', 'caaguazu-portal' ),    'cap' => 'promotur_review_content' ),
 	array( 'icon' => 'user',  'route' => 'panel/perfil',         'label' => __( 'Perfil', 'caaguazu-portal' ),     'cap' => 'promotur_edit_profile' ),
 );
-$items = array_values( array_filter( $candidatos, function ( $i ) { return current_user_can( $i['cap'] ); } ) );
+$items = array_values( array_filter( $candidatos, function ( $i ) { return promotur_can( $i['cap'] ); } ) );
 $items = array_slice( $items, 0, 5 );
 if ( empty( $items ) ) { return; }
 ?>

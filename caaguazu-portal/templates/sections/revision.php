@@ -13,12 +13,12 @@ if ( $detail_id ) {
 		wp_die( esc_html__( 'Ficha no encontrada.', 'caaguazu-portal' ), '', array( 'response' => 404 ) );
 	}
 	$estado   = PROMOTUR_Editorial::get_estado( $detail_id );
-	$author   = get_userdata( $post->post_author );
+	$author_name = promotur_account_display_name( PROMOTUR_Destinos::owner_account_id( $detail_id ) );
 	$groups   = PROMOTUR_Destinos::fields();
 	$feedback = PROMOTUR_Editorial::get_feedback( $detail_id );
 
 	$page_title = __( 'Revisión', 'caaguazu-portal' );
-	$body = function () use ( $post, $detail_id, $estado, $author, $groups, $feedback ) {
+	$body = function () use ( $post, $detail_id, $estado, $author_name, $groups, $feedback ) {
 		?>
 		<div class="promotur-pagehead">
 			<div>
@@ -27,7 +27,7 @@ if ( $detail_id ) {
 				<p class="promotur-muted">
 					<?php
 					/* translators: %s = autor */
-					printf( esc_html__( 'Por %s', 'caaguazu-portal' ), esc_html( $author ? $author->display_name : '—' ) );
+					printf( esc_html__( 'Por %s', 'caaguazu-portal' ), esc_html( $author_name ) );
 					?>
 					· <span class="promotur-pill <?php echo esc_attr( PROMOTUR_Editorial::estado_class( $estado ) ); ?>"><?php echo esc_html( PROMOTUR_Editorial::estado_label( $estado ) ); ?></span>
 				</p>
@@ -76,7 +76,7 @@ if ( $detail_id ) {
 
 					<div class="promotur-review__buttons">
 						<button type="button" class="promotur-btn promotur-btn--danger" data-review-action="return"><?php esc_html_e( 'Devolver con cambios', 'caaguazu-portal' ); ?></button>
-						<?php if ( current_user_can( 'promotur_publish_destino' ) ) : ?>
+						<?php if ( caaguazu_account_can( 'promotor', 'promotur_publish_destino' ) ) : ?>
 							<button type="button" class="promotur-btn promotur-btn--primary" data-review-action="approve"><?php esc_html_e( 'Aprobar y publicar', 'caaguazu-portal' ); ?></button>
 						<?php endif; ?>
 					</div>
@@ -125,7 +125,7 @@ $body = function () use ( $queue ) {
 		<div class="promotur-list">
 			<?php foreach ( $queue as $p ) :
 				$estado = PROMOTUR_Editorial::get_estado( $p->ID );
-				$author = get_userdata( $p->post_author );
+				$author_name = promotur_account_display_name( PROMOTUR_Destinos::owner_account_id( $p->ID ) );
 				$rev    = (int) get_post_meta( $p->ID, '_promotur_revisor', true );
 				?>
 				<a class="promotur-row" href="<?php echo esc_url( promotur_url( 'panel/revision/' . $p->ID ) ); ?>">
@@ -136,12 +136,11 @@ $body = function () use ( $queue ) {
 							/* translators: 1: autor, 2: hace cuánto */
 							printf(
 								esc_html__( '%1$s · esperó %2$s', 'caaguazu-portal' ),
-								esc_html( $author ? $author->display_name : '—' ),
+								esc_html( $author_name ),
 								esc_html( human_time_diff( (int) get_post_modified_time( 'U', true, $p ) ) )
 							);
 							if ( $rev ) {
-								$ru = get_userdata( $rev );
-								echo ' · ' . esc_html( sprintf( __( 'revisa %s', 'caaguazu-portal' ), $ru ? $ru->display_name : '' ) );
+								echo ' · ' . esc_html( sprintf( __( 'revisa %s', 'caaguazu-portal' ), promotur_account_display_name( $rev, '' ) ) );
 							}
 							?>
 						</span>

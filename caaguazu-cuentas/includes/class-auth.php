@@ -46,15 +46,21 @@ class Caaguazu_Cuentas_Auth {
 		$generic = new WP_Error( 'invalid_login', __( 'Email o contraseña incorrectos.', 'caaguazu-cuentas' ) );
 
 		if ( ! $account ) {
+			/** Intento de login fallido (cuenta inexistente). @param string $email */
+			do_action( 'caaguazu_cuentas_login_failed', $email );
 			return $generic;
 		}
 		if ( 'suspended' === $account['status'] ) {
+			do_action( 'caaguazu_cuentas_login_failed', $email, $account );
 			return new WP_Error( 'suspended', __( 'Tu cuenta está suspendida. Contactá al equipo.', 'caaguazu-cuentas' ) );
 		}
 		if ( 'active' !== $account['status'] ) {
+			do_action( 'caaguazu_cuentas_login_failed', $email, $account );
 			return $generic;
 		}
 		if ( ! Caaguazu_Cuentas_Passwords::verify( $password, $account['pass_hash'] ) ) {
+			/** Intento de login fallido (contraseña incorrecta). @param string $email @param array $account */
+			do_action( 'caaguazu_cuentas_login_failed', $email, $account );
 			return $generic;
 		}
 

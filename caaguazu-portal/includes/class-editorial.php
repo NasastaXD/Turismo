@@ -130,18 +130,45 @@ class PROMOTUR_Editorial {
 
 	/**
 	 * Agrega un comentario de feedback al hilo de revisión.
+	 *
+	 * $account_id es un ID de cuenta del sistema de cuentas universal
+	 * (caaguazu-cuentas), no un usuario de WordPress — por eso el comentario
+	 * se guarda con `user_id => 0` (WordPress no tiene ningún usuario al que
+	 * asociarlo) y el nombre/email se toman directo de la cuenta. 0 también
+	 * cubre al bypass de administrador de WP (sin cuenta propia).
+	 *
+	 * @param int    $post_id
+	 * @param int    $account_id
+	 * @param string $text
+	 * @return int
 	 */
-	public static function add_feedback( $post_id, $user_id, $text ) {
+	public static function add_feedback( $post_id, $account_id, $text ) {
 		$text = sanitize_textarea_field( $text );
 		if ( '' === $text ) { return 0; }
-		$user = get_userdata( $user_id );
+
+		$name  = '';
+		$email = '';
+		if ( $account_id > 0 && class_exists( 'Caaguazu_Cuentas_Accounts' ) ) {
+			$account = Caaguazu_Cuentas_Accounts::get( $account_id );
+			if ( $account ) {
+				$name  = $account['display_name'] ? $account['display_name'] : $account['email'];
+				$email = $account['email'];
+			}
+		}
+		if ( '' === $name && function_exists( 'wp_get_current_user' ) ) {
+			// Bypass de administrador de WP: sin cuenta propia, se usa su identidad de WP.
+			$wp_user = wp_get_current_user();
+			$name    = $wp_user->display_name ? $wp_user->display_name : $wp_user->user_login;
+			$email   = $wp_user->user_email;
+		}
+
 		return wp_insert_comment( array(
 			'comment_post_ID'      => $post_id,
 			'comment_content'      => $text,
 			'comment_type'         => self::FEEDBACK_TYPE,
-			'user_id'              => $user_id,
-			'comment_author'       => $user ? $user->display_name : '',
-			'comment_author_email' => $user ? $user->user_email : '',
+			'user_id'              => 0,
+			'comment_author'       => $name,
+			'comment_author_email' => $email,
 			'comment_approved'     => 1,
 		) );
 	}

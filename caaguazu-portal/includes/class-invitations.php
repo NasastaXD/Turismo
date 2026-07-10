@@ -3,6 +3,11 @@
  * Invitaciones (invite-only) en tabla custom. Token en claro solo se muestra una vez
  * (y se guarda en metadata para reconstruir el link corto /i/<token> desde wp-admin).
  * Modelado en el plugin CEAD (modules/auth/class-invitations.php).
+ *
+ * `invited_by` y `used_by_user_id` son IDs de cuenta del sistema de cuentas
+ * universal (caaguazu-cuentas), no de wp_users — no hay FK real (columnas
+ * BIGINT simples), así que el cambio de espacio de IDs no requiere migración
+ * de esquema, sólo de significado hacia adelante.
  */
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -42,7 +47,7 @@ class PROMOTUR_Invitations {
 		$email   = $args['email'] ? sanitize_email( $args['email'] ) : null;
 		$expires = gmdate( 'Y-m-d H:i:s', time() + ( (int) $args['expires_days'] * DAY_IN_SECONDS ) );
 		$now     = current_time( 'mysql', 1 );
-		$by      = get_current_user_id();
+		$by      = caaguazu_account_id(); // 0 si la crea un administrador de WP (bypass), no rompe el insert.
 
 		$tokens = array();
 		for ( $i = 0; $i < $count; $i++ ) {

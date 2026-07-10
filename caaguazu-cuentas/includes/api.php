@@ -106,13 +106,25 @@ function caaguazu_account_logout() {
 /**
  * ¿La cuenta actual (o una dada) puede X en un panel?
  *
+ * Bypass de administrador: los administradores de WordPress no se migran a
+ * cuentas propias (siguen entrando por wp-admin/wp-login.php a propósito,
+ * ver class-migration.php) pero deben poder seguir abriendo cualquier panel
+ * con su login de WP — ese bypass sólo aplica cuando no se pasó un
+ * $account_id explícito (o sea, para "la cuenta actual").
+ *
  * @param string   $panel
  * @param string   $cap
  * @param int|null $account_id null = cuenta actual
  * @return bool
  */
 function caaguazu_account_can( $panel, $cap, $account_id = null ) {
-	$account_id = null === $account_id ? caaguazu_account_id() : (int) $account_id;
+	if ( null === $account_id ) {
+		$account_id = caaguazu_account_id();
+		if ( $account_id <= 0 ) {
+			return caaguazu_wp_admin_bypass();
+		}
+	}
+	$account_id = (int) $account_id;
 	if ( $account_id <= 0 ) {
 		return false;
 	}
@@ -127,11 +139,32 @@ function caaguazu_account_can( $panel, $cap, $account_id = null ) {
  * @return bool
  */
 function caaguazu_account_has_panel( $panel, $account_id = null ) {
-	$account_id = null === $account_id ? caaguazu_account_id() : (int) $account_id;
+	if ( null === $account_id ) {
+		$account_id = caaguazu_account_id();
+		if ( $account_id <= 0 ) {
+			return caaguazu_wp_admin_bypass();
+		}
+	}
+	$account_id = (int) $account_id;
 	if ( $account_id <= 0 ) {
 		return false;
 	}
 	return Caaguazu_Cuentas_Panels::instance()->has_panel( $account_id, $panel );
+}
+
+/**
+ * ¿El visitante actual es un administrador de WordPress logueado? Único
+ * bypass que sortea el sistema de cuentas propio — los administradores no
+ * tienen (a propósito) una cuenta migrada, pero conservan acceso total a
+ * cualquier panel a través de su login de WordPress existente.
+ *
+ * @return bool
+ */
+function caaguazu_wp_admin_bypass() {
+	return apply_filters( 'caaguazu_cuentas_wp_admin_bypass', true )
+		&& function_exists( 'current_user_can' )
+		&& is_user_logged_in()
+		&& current_user_can( 'manage_options' );
 }
 
 /**

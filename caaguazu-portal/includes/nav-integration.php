@@ -50,7 +50,7 @@ add_filter( 'caaguazu_tourism_shell_items', function ( $items ) {
 		'dropdown_cb' => 'promotur_render_shell_dropdown',
 	);
 
-	if ( is_user_logged_in() && current_user_can( 'promotur_view_panel' ) ) {
+	if ( caaguazu_account_can( 'promotor', 'promotur_view_panel' ) ) {
 		$items[] = array(
 			'slug'  => 'panel',
 			'label' => __( 'Panel de promotor', 'caaguazu-portal' ),

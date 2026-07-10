@@ -31,16 +31,16 @@ class PROMOTUR_Ajax {
 	}
 
 	/**
-	 * Guard: nonce + login + capability.
+	 * Guard: nonce + sesión (cuenta propia, o admin de WP vía bypass) + capability.
 	 */
 	private function guard( $cap ) {
 		if ( ! check_ajax_referer( 'promotur', 'nonce', false ) ) {
 			wp_send_json_error( array( 'message' => __( 'Sesión expirada. Recargá la página.', 'caaguazu-portal' ) ), 403 );
 		}
-		if ( ! is_user_logged_in() ) {
+		if ( ! caaguazu_is_logged_in() && ! caaguazu_wp_admin_bypass() ) {
 			wp_send_json_error( array( 'message' => __( 'Necesitás iniciar sesión.', 'caaguazu-portal' ) ), 401 );
 		}
-		if ( $cap && ! current_user_can( $cap ) ) {
+		if ( $cap && ! caaguazu_account_can( 'promotor', $cap ) ) {
 			wp_send_json_error( array( 'message' => __( 'No tenés permiso para esto.', 'caaguazu-portal' ) ), 403 );
 		}
 	}
@@ -48,8 +48,12 @@ class PROMOTUR_Ajax {
 	private function can_edit_post( $post_id ) {
 		$post = get_post( $post_id );
 		if ( ! $post || PROMOTUR_Destinos::CPT !== $post->post_type ) { return false; }
-		if ( current_user_can( 'promotur_review_content' ) || current_user_can( 'manage_options' ) ) { return true; }
-		return (int) $post->post_author === get_current_user_id();
+		if ( caaguazu_account_can( 'promotor', 'promotur_review_content' ) ) { return true; }
+		$owner  = PROMOTUR_Destinos::owner_account_id( $post_id );
+		$mine   = caaguazu_account_id();
+		// > 0 en ambos lados a propósito: dos IDs sin resolver (0 === 0)
+		// nunca deben leerse como "es mío".
+		return $owner > 0 && $mine > 0 && $owner === $mine;
 	}
 
 	/**
@@ -80,16 +84,20 @@ class PROMOTUR_Ajax {
 			}
 			wp_update_post( array( 'ID' => $post_id, 'post_title' => $title, 'post_content' => $content ) );
 		} else {
+			// post_author: usuario de servicio (WordPress exige un autor
+			// válido, pero ninguna persona del panel es ya un usuario de WP).
+			// El dueño real queda en OWNER_META, resuelto por account_id.
 			$post_id = wp_insert_post( array(
 				'post_type'    => PROMOTUR_Destinos::CPT,
 				'post_status'  => 'draft',
 				'post_title'   => $title ? $title : __( '(sin título)', 'caaguazu-portal' ),
 				'post_content' => $content,
-				'post_author'  => get_current_user_id(),
+				'post_author'  => caaguazu_service_user_id(),
 			) );
 			if ( is_wp_error( $post_id ) ) {
 				wp_send_json_error( array( 'message' => $post_id->get_error_message() ) );
 			}
+			PROMOTUR_Destinos::set_owner( $post_id, caaguazu_account_id() );
 			if ( ! get_post_meta( $post_id, '_promotur_estado', true ) ) {
 				update_post_meta( $post_id, '_promotur_estado', 'borrador' );
 			}
@@ -117,10 +125,11 @@ class PROMOTUR_Ajax {
 		// Confianza progresiva: editar una ficha PUBLICADA sin nivel suficiente la deja
 		// en re-revisión (sin bajarla del aire); con nivel Jr+ la edición es directa.
 		$message = __( 'Borrador guardado.', 'caaguazu-portal' );
-		$author  = (int) get_post_field( 'post_author', $post_id );
+		$owner   = PROMOTUR_Destinos::owner_account_id( $post_id );
+		$mine    = caaguazu_account_id();
 		if ( 'publicado' === PROMOTUR_Editorial::get_estado( $post_id )
-			&& get_current_user_id() === $author
-			&& ! PROMOTUR_Stats::can_edit_published( get_current_user_id() ) ) {
+			&& $owner > 0 && $mine > 0 && $owner === $mine
+			&& ! PROMOTUR_Stats::can_edit_published( $mine ) ) {
 			update_post_meta( $post_id, '_promotur_estado', 'en_revision' ); // sigue público (post_status intacto)
 			update_post_meta( $post_id, '_promotur_reedit', 1 );
 			$message = __( 'Guardado. Como editaste una ficha publicada, queda en re-revisión.', 'caaguazu-portal' );
@@ -149,9 +158,9 @@ class PROMOTUR_Ajax {
 			) );
 		}
 		// Confianza progresiva: nivel "De confianza" publica directo (con auditoría).
-		if ( PROMOTUR_Stats::can_publish_directly( get_current_user_id() ) ) {
+		if ( PROMOTUR_Stats::can_publish_directly( caaguazu_account_id() ) ) {
 			PROMOTUR_Editorial::set_estado( $post_id, 'publicado' );
-			PROMOTUR_Editorial::add_feedback( $post_id, get_current_user_id(), __( 'Publicación directa por nivel de confianza (auditoría posterior).', 'caaguazu-portal' ) );
+			PROMOTUR_Editorial::add_feedback( $post_id, caaguazu_account_id(), __( 'Publicación directa por nivel de confianza (auditoría posterior).', 'caaguazu-portal' ) );
 			wp_send_json_success( array( 'message' => __( '¡Publicado! (nivel de confianza)', 'caaguazu-portal' ), 'redirect' => promotur_url( 'panel/mis-contenidos' ) ) );
 		}
 		PROMOTUR_Editorial::set_estado( $post_id, 'enviado' );
@@ -165,7 +174,7 @@ class PROMOTUR_Ajax {
 		if ( ! $post_id || PROMOTUR_Destinos::CPT !== get_post_type( $post_id ) ) {
 			wp_send_json_error( array( 'message' => __( 'Ficha inválida.', 'caaguazu-portal' ) ) );
 		}
-		PROMOTUR_Editorial::set_estado( $post_id, 'en_revision', get_current_user_id() );
+		PROMOTUR_Editorial::set_estado( $post_id, 'en_revision', caaguazu_account_id() );
 		wp_send_json_success( array( 'message' => __( 'Te asignaste la revisión.', 'caaguazu-portal' ) ) );
 	}
 
@@ -178,7 +187,7 @@ class PROMOTUR_Ajax {
 		}
 		$comment = sanitize_textarea_field( wp_unslash( $_POST['comment'] ?? '' ) );
 		if ( $comment ) {
-			PROMOTUR_Editorial::add_feedback( $post_id, get_current_user_id(), $comment );
+			PROMOTUR_Editorial::add_feedback( $post_id, caaguazu_account_id(), $comment );
 		}
 		PROMOTUR_Editorial::set_estado( $post_id, 'publicado' );
 		wp_send_json_success( array( 'message' => __( 'Ficha aprobada y publicada.', 'caaguazu-portal' ), 'redirect' => promotur_url( 'panel/revision' ) ) );
@@ -195,7 +204,7 @@ class PROMOTUR_Ajax {
 		if ( '' === $comment ) {
 			wp_send_json_error( array( 'message' => __( 'Escribí el feedback para el autor.', 'caaguazu-portal' ) ) );
 		}
-		PROMOTUR_Editorial::add_feedback( $post_id, get_current_user_id(), $comment );
+		PROMOTUR_Editorial::add_feedback( $post_id, caaguazu_account_id(), $comment );
 		PROMOTUR_Editorial::set_estado( $post_id, 'necesita_cambios' );
 		wp_send_json_success( array( 'message' => __( 'Devuelto al autor con feedback.', 'caaguazu-portal' ), 'redirect' => promotur_url( 'panel/revision' ) ) );
 	}

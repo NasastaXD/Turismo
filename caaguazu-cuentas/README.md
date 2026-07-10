@@ -118,20 +118,23 @@ repetidamente, también levanta a los promotores nuevos que se sigan creando por
 el flujo viejo durante la etapa de convivencia. A los **administradores** no se
 los migra: conservan su login de WordPress.
 
-## Puente (etapa de convivencia)
+## Puente (admins de WordPress)
 
-Mientras el Portal siga autenticando con usuarios de WordPress, la API
-`caaguazu_current_account()` resuelve primero la sesión propia y, si no hay,
-cae en la cuenta migrada del usuario WP logueado (filtro
-`caaguazu_cuentas_bridge_wp_session`, activo por defecto). Así la API devuelve
-la cuenta correcta se haya entrado por el flujo viejo o el nuevo, y el cutover
-posterior —reemplazar las llamadas de auth de WordPress del Portal por esta
-API— es gradual y sin cortes.
+Los administradores de WordPress no se migran a cuentas (siguen entrando por
+su login de wp-admin de siempre) pero conservan acceso total a cualquier panel
+vía `caaguazu_wp_admin_bypass()` — usado internamente por
+`caaguazu_account_can()`/`caaguazu_account_has_panel()` cuando no hay una
+cuenta propia logueada. El filtro `caaguazu_cuentas_bridge_wp_session` sigue
+existiendo para resolver la cuenta migrada de un usuario WP logueado, por si
+algún flujo residual de WordPress lo necesita.
 
 ## Estado
 
-**v0.1.0 — fundación.** Esta versión instala el sistema, migra a los promotores
-y expone la API, conviviendo con el login actual del Portal (nada se rompe).
-La siguiente ronda reemplaza en el Portal las llamadas a `wp_signon` /
-`current_user_can` / `is_user_logged_in` / `reset_password` por esta API y apaga
-el alta nativa.
+**v0.2.0 — cutover integrado.** El Portal de Promotores (`caaguazu-portal`
+2.0.0) ya corre enteramente sobre esta API: login, registro, recuperación de
+contraseña, permisos por sección, autoría de fichas (usuario de servicio +
+meta de dueño real) y niveles de confianza. Ninguna persona del panel tiene ya
+un usuario de WordPress. Pendiente como trabajo aparte (documentado en el
+README de caaguazu-portal): la pantalla de wp-admin "Usuarios" del Portal
+sigue listando usuarios de WordPress legados — no es parte del flujo diario
+de un promotor, así que quedó fuera de esta ronda.

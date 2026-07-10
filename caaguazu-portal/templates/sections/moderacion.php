@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 $resenas   = PROMOTUR_Resenas::pending();
 $consultas = PROMOTUR_Consultas::all();
 $reportes  = PROMOTUR_Consultas::pending_reports();
-$minis     = get_users( array( 'role' => 'promotur_mini', 'number' => 200, 'orderby' => 'display_name' ) );
+$minis     = promotur_team_members( 'promotur_mini' );
 
 $page_title = __( 'Moderación', 'caaguazu-portal' );
 $body = function () use ( $resenas, $consultas, $reportes, $minis ) {
@@ -55,7 +55,7 @@ $body = function () use ( $resenas, $consultas, $reportes, $minis ) {
 							<select data-consulta-user>
 								<option value=""><?php esc_html_e( 'Derivar a un Mini…', 'caaguazu-portal' ); ?></option>
 								<?php foreach ( $minis as $m ) : ?>
-									<option value="<?php echo esc_attr( $m->ID ); ?>" <?php selected( $asig, $m->ID ); ?>><?php echo esc_html( $m->display_name ); ?></option>
+									<option value="<?php echo esc_attr( $m['id'] ); ?>" <?php selected( $asig, $m['id'] ); ?>><?php echo esc_html( $m['display_name'] ); ?></option>
 								<?php endforeach; ?>
 							</select>
 							<button type="button" class="promotur-btn promotur-btn--ghost promotur-btn--small" data-op="assign"><?php esc_html_e( 'Derivar', 'caaguazu-portal' ); ?></button>

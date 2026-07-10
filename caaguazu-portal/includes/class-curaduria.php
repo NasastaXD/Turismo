@@ -51,7 +51,7 @@ class PROMOTUR_Curaduria {
 	 * Guarda destacados + banner (admin-post, gateado por capability).
 	 */
 	public function handle_save() {
-		if ( ! current_user_can( 'promotur_curate_featured' ) || ! check_admin_referer( 'promotur_curaduria' ) ) {
+		if ( ! caaguazu_account_can( 'promotor', 'promotur_curate_featured' ) || ! check_admin_referer( 'promotur_curaduria' ) ) {
 			wp_die( esc_html__( 'No autorizado.', 'caaguazu-portal' ) );
 		}
 

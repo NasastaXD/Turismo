@@ -124,9 +124,11 @@ while ( have_posts() ) :
 
 		<p class="promotur-destino__author promotur-muted">
 			<?php
-			$author = get_userdata( get_post_field( 'post_author', $id ) );
+			$author_name = function_exists( 'promotur_account_display_name' )
+				? promotur_account_display_name( PROMOTUR_Destinos::owner_account_id( $id ), '' )
+				: '';
 			/* translators: %s = autor */
-			printf( esc_html__( 'Ficha producida por %s — Promotores Turísticos del Bachiller técnico de servicios.', 'caaguazu-portal' ), esc_html( $author ? $author->display_name : '' ) );
+			printf( esc_html__( 'Ficha producida por %s — Promotores Turísticos del Bachiller técnico de servicios.', 'caaguazu-portal' ), esc_html( $author_name ) );
 			?>
 		</p>
 	</article>

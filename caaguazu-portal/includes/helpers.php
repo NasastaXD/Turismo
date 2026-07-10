@@ -6,6 +6,61 @@
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 /**
+ * Nombre para mostrar de una cuenta (autor/revisor de una ficha, etc.).
+ * Acepta un ID de cuenta del sistema de cuentas universal.
+ *
+ * @param int    $account_id
+ * @param string $fallback texto si no se puede resolver (cuenta borrada, ID 0, etc.)
+ * @return string
+ */
+function promotur_account_display_name( $account_id, $fallback = '—' ) {
+	$account_id = (int) $account_id;
+	if ( $account_id <= 0 || ! class_exists( 'Caaguazu_Cuentas_Accounts' ) ) {
+		return $fallback;
+	}
+	$account = Caaguazu_Cuentas_Accounts::get( $account_id );
+	if ( ! $account ) { return $fallback; }
+	return $account['display_name'] ? $account['display_name'] : $account['email'];
+}
+
+/**
+ * Miembros del equipo del panel "promotor": cuentas con grant activo,
+ * opcionalmente filtradas por rol. Reemplaza a `get_users( array( 'role' =>
+ * ... ) )` en las pantallas del panel (Equipo, Moderación, Reportes, Tareas)
+ * ahora que los promotores no son usuarios de WordPress — el "quién puede
+ * asignarse esto" vive en `caaguazu_grants`, no en `wp_users`.
+ *
+ * @param string|string[]|null $roles rol o roles a filtrar (null = todos los roles del panel)
+ * @return array[] { id (int, ID de cuenta), email, display_name, role }
+ */
+function promotur_team_members( $roles = null ) {
+	if ( ! class_exists( 'Caaguazu_Cuentas_Install' ) ) { return array(); }
+	global $wpdb;
+	$t     = Caaguazu_Cuentas_Install::tables();
+	$roles = $roles ? (array) $roles : null;
+
+	$sql    = "SELECT a.id, a.email, a.display_name, g.role
+		FROM {$t['grants']} g
+		INNER JOIN {$t['accounts']} a ON a.id = g.account_id
+		WHERE g.panel = %s AND g.status = 'active' AND a.status = 'active'";
+	$params = array( 'promotor' );
+	if ( $roles ) {
+		$placeholders = implode( ',', array_fill( 0, count( $roles ), '%s' ) );
+		$sql         .= " AND g.role IN ($placeholders)";
+		$params       = array_merge( $params, $roles );
+	}
+	$sql .= ' ORDER BY a.display_name ASC';
+
+	$rows = $wpdb->get_results( $wpdb->prepare( $sql, $params ), ARRAY_A ); // phpcs:ignore WordPress.DB
+	if ( ! $rows ) { return array(); }
+	foreach ( $rows as &$r ) {
+		$r['id']           = (int) $r['id'];
+		$r['display_name'] = $r['display_name'] ? $r['display_name'] : $r['email'];
+	}
+	return $rows;
+}
+
+/**
  * URL absoluta a una ruta del portal/auth.
  *
  * El panel vive bajo /turismo/panel (no en la raíz) — las demás rutas
@@ -54,13 +109,28 @@ function promotur_template( $route, $vars = array() ) {
 }
 
 /**
- * Rol del portal "más alto" que tiene el usuario actual (o '').
+ * Rol del portal "más alto" de una cuenta (o '').
  *
- * @param int|null $user_id
+ * Sin argumento: resuelve la cuenta ACTUAL del sistema de cuentas universal
+ * (caaguazu-cuentas), o cae en el bypass de administrador de WP si no hay
+ * cuenta propia logueada. Con un $user_id explícito: uso legado de
+ * wp-admin (class-admin.php lista todavía usuarios de WordPress con roles
+ * promotur_* — pantalla no migrada aún, ver README de caaguazu-cuentas).
+ *
+ * @param int|null $user_id ID de usuario de WordPress (uso legado, no de cuenta).
  * @return string
  */
 function promotur_user_role( $user_id = null ) {
-	$user = $user_id ? get_userdata( $user_id ) : wp_get_current_user();
+	if ( null === $user_id ) {
+		if ( function_exists( 'caaguazu_account_id' ) && caaguazu_account_id() > 0 ) {
+			$grant = Caaguazu_Cuentas_Panels::instance()->get_grant( caaguazu_account_id(), 'promotor' );
+			return ( $grant && 'active' === $grant['status'] ) ? (string) $grant['role'] : '';
+		}
+		// Sin cuenta propia: ¿es un administrador de WP con acceso vía bypass?
+		return current_user_can( 'manage_options' ) ? 'promotur_promotor' : '';
+	}
+
+	$user = get_userdata( $user_id );
 	if ( ! $user || ! $user->exists() ) {
 		return '';
 	}
@@ -78,13 +148,15 @@ function promotur_user_role( $user_id = null ) {
 }
 
 /**
- * Etiqueta legible del rol del portal del usuario actual.
+ * Etiqueta legible del rol del portal de la cuenta actual.
  *
  * @return string
  */
 function promotur_role_label() {
 	$role = promotur_user_role();
-	if ( 'promotur_promotor' === $role && current_user_can( 'manage_options' ) && ! in_array( 'promotur_promotor', (array) wp_get_current_user()->roles, true ) ) {
+	// El rol sólo puede salir de "promotur_promotor" sin una cuenta propia
+	// (caaguazu_account_id() <= 0) por el bypass de administrador de WP.
+	if ( 'promotur_promotor' === $role && function_exists( 'caaguazu_account_id' ) && caaguazu_account_id() <= 0 ) {
 		return __( 'Administrador', 'caaguazu-portal' );
 	}
 	return $role ? PROMOTUR_Roles::label( $role ) : __( 'Invitado', 'caaguazu-portal' );
@@ -100,13 +172,44 @@ function promotur_current_route() {
 }
 
 /**
- * Wrapper legible de current_user_can.
+ * Wrapper legible del chequeo de capability del panel "promotor" (cuenta
+ * actual, con bypass de administrador de WP incluido — ver
+ * caaguazu_account_can()).
  *
  * @param string $cap
  * @return bool
  */
 function promotur_can( $cap ) {
-	return current_user_can( $cap );
+	return function_exists( 'caaguazu_account_can' ) ? caaguazu_account_can( 'promotor', $cap ) : current_user_can( $cap );
+}
+
+/**
+ * Identidad normalizada de "quién es" para la topbar/perfil/equipo: cuenta
+ * propia si hay una logueada, o los datos del administrador de WP si entró
+ * por el bypass. Evita que cada template tenga que resolver esa rama a mano.
+ *
+ * @return array{id:int,display_name:string,email:string,phone:string,is_admin_bypass:bool}
+ */
+function promotur_current_identity() {
+	$account_id = function_exists( 'caaguazu_account_id' ) ? caaguazu_account_id() : 0;
+	if ( $account_id > 0 ) {
+		$account = caaguazu_current_account();
+		return array(
+			'id'              => $account_id,
+			'display_name'    => $account['display_name'] ? $account['display_name'] : $account['email'],
+			'email'           => $account['email'],
+			'phone'           => (string) $account['phone'],
+			'is_admin_bypass' => false,
+		);
+	}
+	$wp_user = wp_get_current_user();
+	return array(
+		'id'              => 0,
+		'display_name'    => $wp_user->display_name ? $wp_user->display_name : $wp_user->user_login,
+		'email'           => (string) $wp_user->user_email,
+		'phone'           => '',
+		'is_admin_bypass' => true,
+	);
 }
 
 /**
@@ -169,26 +272,40 @@ function promotur_nav_items() {
 }
 
 /**
- * Teléfono del usuario (meta _promotur_phone).
+ * Teléfono de la cuenta actual (columna `phone` de caaguazu_accounts).
  *
- * @param int|null $user_id
+ * @param int|null $user_id ID de usuario de WordPress (uso legado; ignorado
+ *                          para la cuenta actual, que ya no es un WP user).
  * @return string
  */
 function promotur_user_phone( $user_id = null ) {
-	$user_id = $user_id ? $user_id : get_current_user_id();
+	if ( null === $user_id && function_exists( 'caaguazu_current_account' ) ) {
+		$account = caaguazu_current_account();
+		return $account ? (string) $account['phone'] : '';
+	}
 	return $user_id ? (string) get_user_meta( $user_id, '_promotur_phone', true ) : '';
 }
 
 /**
- * Mensaje efímero (flash) por usuario, vía transient. Patrón PRG.
+ * Mensaje efímero (flash) por visitante, vía transient. Patrón PRG.
+ *
+ * La clave usa el ID de cuenta si hay una logueada, o el ID de WordPress
+ * prefijado ("wp123") para el bypass de administrador — así nunca colisiona
+ * un ID de cuenta con un ID de usuario de WP que casualmente coincida.
  *
  * @param string|null $msg  null = leer y limpiar; string = setear
  * @param string      $type info|success|error
  * @return array|null  al leer: { message, type } o null
  */
 function promotur_flash( $msg = null, $type = 'info' ) {
-	$uid = get_current_user_id();
-	if ( ! $uid ) { return null; }
+	$account_id = function_exists( 'caaguazu_account_id' ) ? caaguazu_account_id() : 0;
+	if ( $account_id > 0 ) {
+		$uid = $account_id;
+	} else {
+		$wp_id = get_current_user_id();
+		if ( ! $wp_id ) { return null; }
+		$uid = 'wp' . $wp_id;
+	}
 	$key = 'promotur_flash_' . $uid;
 
 	if ( null === $msg ) {
@@ -205,17 +322,30 @@ function promotur_flash( $msg = null, $type = 'info' ) {
 }
 
 /**
- * Avatar del usuario: imagen si tiene, o iniciales como fallback.
+ * Avatar: imagen (Gravatar por email) si hay, o iniciales como fallback.
  *
- * @param int    $user_id
- * @param string $extra_class
+ * Acepta dos formas: un ID de usuario de WordPress (uso legado — todavía lo
+ * usa templates/sections/equipo.php, que sigue listando usuarios de WP, ver
+ * README de caaguazu-cuentas), o un array de identidad normalizada
+ * { email, display_name } como el que devuelve promotur_current_identity().
+ *
+ * @param int|array $identity
+ * @param string    $extra_class
  * @return string HTML
  */
-function promotur_avatar( $user_id, $extra_class = '' ) {
-	$user = get_userdata( $user_id );
-	if ( ! $user ) { return ''; }
+function promotur_avatar( $identity, $extra_class = '' ) {
+	if ( is_array( $identity ) ) {
+		$email = (string) ( $identity['email'] ?? '' );
+		$name  = (string) ( $identity['display_name'] ?? '' );
+		if ( '' === $email && '' === $name ) { return ''; }
+	} else {
+		$user = get_userdata( (int) $identity );
+		if ( ! $user ) { return ''; }
+		$email = $user->user_email;
+		$name  = $user->display_name ? $user->display_name : $user->user_login;
+	}
 
-	$has_gravatar = function_exists( 'get_avatar_url' ) ? get_avatar_url( $user_id ) : '';
+	$has_gravatar = ( $email && function_exists( 'get_avatar_url' ) ) ? get_avatar_url( $email ) : '';
 	if ( $has_gravatar ) {
 		return sprintf(
 			'<span class="promotur-avatar %s"><img src="%s" alt="" width="36" height="36" loading="lazy"></span>',
@@ -223,8 +353,7 @@ function promotur_avatar( $user_id, $extra_class = '' ) {
 			esc_url( $has_gravatar )
 		);
 	}
-	$name    = $user->display_name ? $user->display_name : $user->user_login;
-	$parts   = preg_split( '/\s+/', trim( $name ) );
+	$parts    = preg_split( '/\s+/', trim( $name ) );
 	$initials = strtoupper( mb_substr( $parts[0], 0, 1 ) . ( isset( $parts[1] ) ? mb_substr( $parts[1], 0, 1 ) : '' ) );
 	return sprintf(
 		'<span class="promotur-avatar promotur-avatar--initials %s" aria-hidden="true">%s</span>',
