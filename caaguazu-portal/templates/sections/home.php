@@ -4,22 +4,28 @@
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-$uid        = get_current_user_id();
-$user       = wp_get_current_user();
-$can_review = current_user_can( 'promotur_review_content' );
-$can_draft  = current_user_can( 'promotur_create_draft' );
+$uid        = caaguazu_account_id();
+$identity   = promotur_current_identity();
+$can_review = caaguazu_account_can( 'promotor', 'promotur_review_content' );
+$can_draft  = caaguazu_account_can( 'promotor', 'promotur_create_draft' );
 
-/** Cuenta destinos por estado (y autor opcional). */
-$count_by = function ( $estado, $author = 0 ) {
-	$args = array(
+/**
+ * Cuenta destinos por estado (y dueño opcional). El dueño se filtra por el
+ * meta de dueño real (ver PROMOTUR_Destinos::OWNER_META), no por post_author.
+ */
+$count_by = function ( $estado, $owner = 0 ) {
+	$meta_query = array( array( 'key' => '_promotur_estado', 'value' => (array) $estado, 'compare' => 'IN' ) );
+	if ( $owner ) {
+		$meta_query['relation'] = 'AND';
+		$meta_query[] = array( 'key' => PROMOTUR_Destinos::OWNER_META, 'value' => $owner );
+	}
+	$q = new WP_Query( array(
 		'post_type'      => PROMOTUR_Destinos::CPT,
 		'post_status'    => 'any',
 		'posts_per_page' => 1,
 		'fields'         => 'ids',
-		'meta_query'     => array( array( 'key' => '_promotur_estado', 'value' => (array) $estado, 'compare' => 'IN' ) ),
-	);
-	if ( $author ) { $args['author'] = $author; }
-	$q = new WP_Query( $args );
+		'meta_query'     => $meta_query, // phpcs:ignore WordPress.DB.SlowDBQuery
+	) );
 	return (int) $q->found_posts;
 };
 
@@ -32,18 +38,18 @@ if ( $can_draft ) {
 	$pulse[] = array( 'n' => $count_by( 'necesita_cambios', $uid ), 'label' => __( 'esperan tu corrección', 'caaguazu-portal' ), 'url' => 'panel/mis-contenidos', 'icon' => 'edit' );
 	$pulse[] = array( 'n' => $count_by( array( 'borrador', 'enviado', 'en_revision' ), $uid ), 'label' => __( 'en proceso', 'caaguazu-portal' ), 'url' => 'panel/mis-contenidos', 'icon' => 'doc' );
 }
-if ( current_user_can( 'promotur_moderate' ) ) {
+if ( caaguazu_account_can( 'promotor', 'promotur_moderate' ) ) {
 	$pulse[] = array( 'n' => count( PROMOTUR_Resenas::pending() ), 'label' => __( 'reseñas por moderar', 'caaguazu-portal' ), 'url' => 'panel/moderacion', 'icon' => 'star' );
 	$pulse[] = array( 'n' => PROMOTUR_Consultas::count_open(), 'label' => __( 'consultas sin responder', 'caaguazu-portal' ), 'url' => 'panel/moderacion', 'icon' => 'inbox' );
 }
 
 $page_title = __( 'Inicio', 'caaguazu-portal' );
-$body = function () use ( $user, $pulse, $can_draft, $can_review ) {
+$body = function () use ( $identity, $pulse, $can_draft, $can_review ) {
 	?>
 	<div class="promotur-eyebrow"><?php esc_html_e( 'Tu pulso de hoy', 'caaguazu-portal' ); ?></div>
 	<h2 class="promotur-h2"><?php
 		/* translators: %s = nombre */
-		printf( esc_html__( 'Hola, %s 👋', 'caaguazu-portal' ), esc_html( $user->display_name ) );
+		printf( esc_html__( 'Hola, %s 👋', 'caaguazu-portal' ), esc_html( $identity['display_name'] ) );
 	?></h2>
 
 	<?php if ( ! empty( $pulse ) ) : ?>
@@ -62,7 +68,7 @@ $body = function () use ( $user, $pulse, $can_draft, $can_review ) {
 	<div class="promotur-grid promotur-grid--3">
 		<?php
 		$quick = array();
-		if ( current_user_can( 'promotur_edit_destino' ) ) {
+		if ( caaguazu_account_can( 'promotor', 'promotur_edit_destino' ) ) {
 			$quick[] = array( 'icon' => 'edit', 'label' => __( 'Crear una ficha', 'caaguazu-portal' ), 'url' => 'panel/editor' );
 		}
 		if ( $can_draft ) {
@@ -71,7 +77,7 @@ $body = function () use ( $user, $pulse, $can_draft, $can_review ) {
 		if ( $can_review ) {
 			$quick[] = array( 'icon' => 'inbox', 'label' => __( 'Cola de revisión', 'caaguazu-portal' ), 'url' => 'panel/revision' );
 		}
-		if ( current_user_can( 'promotur_manage_team' ) ) {
+		if ( caaguazu_account_can( 'promotor', 'promotur_manage_team' ) ) {
 			$quick[] = array( 'icon' => 'team', 'label' => __( 'Equipo', 'caaguazu-portal' ), 'url' => 'panel/equipo' );
 		}
 		$quick[] = array( 'icon' => 'user', 'label' => __( 'Mi perfil', 'caaguazu-portal' ), 'url' => 'panel/perfil' );

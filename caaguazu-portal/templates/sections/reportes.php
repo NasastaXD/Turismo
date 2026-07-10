@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 $top     = PROMOTUR_Stats::top_viewed( 8 );
 $empties = PROMOTUR_Stats::empty_searches();
 $health  = PROMOTUR_Stats::content_health( 6 );
-$autores = get_users( array( 'role__in' => array( 'promotur_promotor', 'promotur_mini' ), 'number' => 200 ) );
+$autores = promotur_team_members( array( 'promotur_promotor', 'promotur_mini' ) );
 
 $page_title = __( 'Reportes', 'caaguazu-portal' );
 $body = function () use ( $top, $empties, $health, $autores ) {
@@ -16,10 +16,10 @@ $body = function () use ( $top, $empties, $health, $autores ) {
 	<h3 class="promotur-h3"><?php esc_html_e( 'Producción por autor', 'caaguazu-portal' ); ?></h3>
 	<div class="promotur-list">
 		<?php foreach ( $autores as $u ) :
-			$c = PROMOTUR_Stats::author_counts( $u->ID );
+			$c = PROMOTUR_Stats::author_counts( $u['id'] );
 			if ( 0 === $c['total'] ) { continue; } ?>
 			<div class="promotur-row">
-				<span class="promotur-row__main"><span class="promotur-row__title"><?php echo esc_html( $u->display_name ); ?></span></span>
+				<span class="promotur-row__main"><span class="promotur-row__title"><?php echo esc_html( $u['display_name'] ); ?></span></span>
 				<span class="promotur-row__meta"><?php
 					/* translators: 1: publicadas, 2: total */
 					printf( esc_html__( '%1$d publicadas / %2$d', 'caaguazu-portal' ), $c['publicadas'], $c['total'] );

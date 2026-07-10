@@ -10,6 +10,15 @@ class PROMOTUR_Destinos {
 	private static $instance = null;
 	const CPT = 'promotur_destino';
 
+	/**
+	 * Meta donde vive el dueño REAL de la ficha: el ID de cuenta del sistema
+	 * de cuentas universal (caaguazu-cuentas). `post_author` deja de servir
+	 * para esto — en toda ficha creada desde el panel apunta al usuario de
+	 * servicio (caaguazu_service_user_id()), porque WordPress exige un autor
+	 * válido pero ninguna persona del panel es ya un usuario de WordPress.
+	 */
+	const OWNER_META = '_caaguazu_owner';
+
 	public static function instance() {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
@@ -160,18 +169,57 @@ class PROMOTUR_Destinos {
 				'type'          => $type,
 				'single'        => true,
 				'show_in_rest'  => false,
-				'auth_callback' => function () { return current_user_can( 'promotur_edit_destino' ); },
+				'auth_callback' => function () { return caaguazu_account_can( 'promotor', 'promotur_edit_destino' ); },
 			) );
 		}
 		// Meta de flujo editorial.
-		foreach ( array( '_promotur_estado', '_promotur_revisor', '_promotur_galeria', '_promotur_destacado', '_promotur_verificado_en' ) as $key ) {
+		foreach ( array( '_promotur_estado', '_promotur_revisor', '_promotur_galeria', '_promotur_destacado', '_promotur_verificado_en', self::OWNER_META ) as $key ) {
 			register_post_meta( self::CPT, $key, array(
 				'type'          => 'string',
 				'single'        => true,
 				'show_in_rest'  => false,
-				'auth_callback' => function () { return current_user_can( 'promotur_edit_destino' ); },
+				'auth_callback' => function () { return caaguazu_account_can( 'promotor', 'promotur_edit_destino' ); },
 			) );
 		}
+	}
+
+	/**
+	 * ID de cuenta dueña real de una ficha.
+	 *
+	 * Prioriza el meta propio (`OWNER_META`, seteado en toda ficha creada
+	 * desde el cutover). Si no está (ficha creada ANTES del cutover, cuando
+	 * post_author todavía era un usuario de WordPress real), resuelve vía el
+	 * vínculo que dejó la migración (wp_user_id de la cuenta) — así el
+	 * contenido viejo sigue reconociendo a su dueño sin necesidad de tocar
+	 * cada fila a mano.
+	 *
+	 * @param int $post_id
+	 * @return int ID de cuenta, o 0 si no se puede resolver.
+	 */
+	public static function owner_account_id( $post_id ) {
+		$meta = (int) get_post_meta( $post_id, self::OWNER_META, true );
+		if ( $meta > 0 ) {
+			return $meta;
+		}
+		if ( ! function_exists( 'caaguazu_account_for_wp_user' ) ) {
+			return 0;
+		}
+		$post_author = (int) get_post_field( 'post_author', $post_id );
+		if ( $post_author <= 0 ) {
+			return 0;
+		}
+		$account = caaguazu_account_for_wp_user( $post_author );
+		return $account ? (int) $account['id'] : 0;
+	}
+
+	/**
+	 * Marca el dueño real (cuenta) de una ficha nueva.
+	 *
+	 * @param int $post_id
+	 * @param int $account_id
+	 */
+	public static function set_owner( $post_id, $account_id ) {
+		update_post_meta( $post_id, self::OWNER_META, (int) $account_id );
 	}
 
 	/**

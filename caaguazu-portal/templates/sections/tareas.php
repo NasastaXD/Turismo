@@ -2,10 +2,10 @@
 /** Tareas / asignaciones + tablero "lo que falta cubrir". */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-$uid       = get_current_user_id();
+$uid       = caaguazu_account_id();
 $tareas    = PROMOTUR_Tareas::visible_for( $uid );
-$can_assign = current_user_can( 'promotur_assign_tasks' );
-$minis     = $can_assign ? get_users( array( 'role' => 'promotur_mini', 'number' => 200, 'orderby' => 'display_name' ) ) : array();
+$can_assign = caaguazu_account_can( 'promotor', 'promotur_assign_tasks' );
+$minis     = $can_assign ? promotur_team_members( 'promotur_mini' ) : array();
 $destinos  = $can_assign ? get_posts( array( 'post_type' => PROMOTUR_Destinos::CPT, 'post_status' => array( 'publish', 'draft', 'pending' ), 'posts_per_page' => 200, 'orderby' => 'title', 'order' => 'ASC' ) ) : array();
 
 $page_title = __( 'Tareas', 'caaguazu-portal' );
@@ -36,7 +36,7 @@ $body = function () use ( $uid, $tareas, $can_assign, $minis, $destinos ) {
 				</div>
 				<label class="promotur-field"><span><?php esc_html_e( 'Asignar a (Mini Promotores)', 'caaguazu-portal' ); ?></span>
 					<select name="asignados[]" multiple size="4">
-						<?php foreach ( $minis as $m ) : ?><option value="<?php echo esc_attr( $m->ID ); ?>"><?php echo esc_html( $m->display_name ); ?></option><?php endforeach; ?>
+						<?php foreach ( $minis as $m ) : ?><option value="<?php echo esc_attr( $m['id'] ); ?>"><?php echo esc_html( $m['display_name'] ); ?></option><?php endforeach; ?>
 					</select>
 				</label>
 				<button type="submit" class="promotur-btn promotur-btn--primary"><?php esc_html_e( 'Crear', 'caaguazu-portal' ); ?></button>
@@ -68,7 +68,7 @@ $body = function () use ( $uid, $tareas, $can_assign, $minis, $destinos ) {
 						<?php if ( 'hueco' === $tipo && 'completada' !== $estado && ! $mine ) : ?>
 							<button type="button" class="promotur-btn promotur-btn--ghost promotur-btn--small" data-op="claim"><?php esc_html_e( 'Reclamar', 'caaguazu-portal' ); ?></button>
 						<?php endif; ?>
-						<?php if ( 'completada' !== $estado && ( $mine || current_user_can( 'promotur_assign_tasks' ) ) ) : ?>
+						<?php if ( 'completada' !== $estado && ( $mine || $can_assign ) ) : ?>
 							<button type="button" class="promotur-btn promotur-btn--primary promotur-btn--small" data-op="complete"><?php esc_html_e( 'Marcar completada', 'caaguazu-portal' ); ?></button>
 						<?php endif; ?>
 					</div>

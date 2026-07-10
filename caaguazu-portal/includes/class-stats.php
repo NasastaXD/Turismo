@@ -79,7 +79,10 @@ class PROMOTUR_Stats {
 		return $log;
 	}
 
-	/* ----- Niveles de confianza ----- */
+	/* ----- Niveles de confianza -----
+	   Se guardan en el metadata de la CUENTA (caaguazu-cuentas), no en
+	   usermeta de WordPress — desde el cutover, un promotor ya no es un
+	   usuario de WP. $account_id es el ID de caaguazu_accounts. */
 	public static function levels() {
 		return array(
 			'aprendiz'  => __( 'Aprendiz', 'caaguazu-portal' ),
@@ -88,20 +91,20 @@ class PROMOTUR_Stats {
 		);
 	}
 
-	public static function get_level( $user_id ) {
-		$l = get_user_meta( $user_id, self::LEVEL_META, true );
+	public static function get_level( $account_id ) {
+		$l = function_exists( 'caaguazu_account_meta_get' ) ? caaguazu_account_meta_get( $account_id, self::LEVEL_META ) : '';
 		return $l ? $l : 'aprendiz';
 	}
 
-	public static function level_label( $user_id ) {
+	public static function level_label( $account_id ) {
 		$levels = self::levels();
-		$l = self::get_level( $user_id );
+		$l = self::get_level( $account_id );
 		return isset( $levels[ $l ] ) ? $levels[ $l ] : $levels['aprendiz'];
 	}
 
-	public static function set_level( $user_id, $level ) {
-		if ( array_key_exists( $level, self::levels() ) ) {
-			update_user_meta( $user_id, self::LEVEL_META, $level );
+	public static function set_level( $account_id, $level ) {
+		if ( array_key_exists( $level, self::levels() ) && function_exists( 'caaguazu_account_meta_set' ) ) {
+			caaguazu_account_meta_set( $account_id, self::LEVEL_META, $level );
 		}
 	}
 
@@ -109,32 +112,51 @@ class PROMOTUR_Stats {
 
 	/**
 	 * ¿Puede editar fichas ya publicadas sin pasar de nuevo por revisión?
-	 * Desbloqueado en nivel Jr o superior (o si es revisor/admin).
+	 * Desbloqueado en nivel Jr o superior (o si es revisor/admin, o el
+	 * bypass de administrador de WP cuando $account_id es 0).
+	 *
+	 * @param int $account_id
 	 */
-	public static function can_edit_published( $user_id ) {
-		if ( user_can( $user_id, 'promotur_review_content' ) || user_can( $user_id, 'manage_options' ) ) {
+	public static function can_edit_published( $account_id ) {
+		if ( $account_id <= 0 ) {
+			return function_exists( 'caaguazu_wp_admin_bypass' ) && caaguazu_wp_admin_bypass();
+		}
+		if ( caaguazu_account_can( 'promotor', 'promotur_review_content', $account_id ) ) {
 			return true;
 		}
-		return in_array( self::get_level( $user_id ), array( 'jr', 'confianza' ), true );
+		return in_array( self::get_level( $account_id ), array( 'jr', 'confianza' ), true );
 	}
 
 	/**
 	 * ¿Puede publicar directo (con auditoría posterior)?
-	 * Desbloqueado en nivel "De confianza" (o si ya tiene la cap de publicar).
+	 * Desbloqueado en nivel "De confianza" (o si ya tiene la cap de publicar,
+	 * o el bypass de administrador de WP cuando $account_id es 0).
+	 *
+	 * @param int $account_id
 	 */
-	public static function can_publish_directly( $user_id ) {
-		if ( user_can( $user_id, 'promotur_publish_destino' ) ) {
+	public static function can_publish_directly( $account_id ) {
+		if ( $account_id <= 0 ) {
+			return function_exists( 'caaguazu_wp_admin_bypass' ) && caaguazu_wp_admin_bypass();
+		}
+		if ( caaguazu_account_can( 'promotor', 'promotur_publish_destino', $account_id ) ) {
 			return true;
 		}
-		return 'confianza' === self::get_level( $user_id );
+		return 'confianza' === self::get_level( $account_id );
 	}
 
 	/* ----- Producción ----- */
 
-	/** Cuenta destinos de un autor por estado de publicación. */
-	public static function author_counts( $user_id ) {
-		$pub = new WP_Query( array( 'post_type' => PROMOTUR_Destinos::CPT, 'post_status' => 'publish', 'author' => $user_id, 'posts_per_page' => 1, 'fields' => 'ids' ) );
-		$all = new WP_Query( array( 'post_type' => PROMOTUR_Destinos::CPT, 'post_status' => array( 'publish', 'draft', 'pending' ), 'author' => $user_id, 'posts_per_page' => 1, 'fields' => 'ids' ) );
+	/**
+	 * Cuenta destinos de un autor por estado de publicación. Filtra por el
+	 * meta de dueño real (`_caaguazu_owner`), no por post_author (que en
+	 * todo destino creado desde el panel apunta al usuario de servicio).
+	 *
+	 * @param int $account_id
+	 */
+	public static function author_counts( $account_id ) {
+		$meta_query = array( array( 'key' => PROMOTUR_Destinos::OWNER_META, 'value' => (int) $account_id ) );
+		$pub = new WP_Query( array( 'post_type' => PROMOTUR_Destinos::CPT, 'post_status' => 'publish', 'meta_query' => $meta_query, 'posts_per_page' => 1, 'fields' => 'ids' ) ); // phpcs:ignore WordPress.DB.SlowDBQuery
+		$all = new WP_Query( array( 'post_type' => PROMOTUR_Destinos::CPT, 'post_status' => array( 'publish', 'draft', 'pending' ), 'meta_query' => $meta_query, 'posts_per_page' => 1, 'fields' => 'ids' ) ); // phpcs:ignore WordPress.DB.SlowDBQuery
 		return array( 'publicadas' => (int) $pub->found_posts, 'total' => (int) $all->found_posts );
 	}
 

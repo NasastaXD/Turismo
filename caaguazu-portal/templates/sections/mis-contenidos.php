@@ -4,11 +4,11 @@
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-$uid   = get_current_user_id();
+$uid   = caaguazu_account_id();
 $posts = get_posts( array(
 	'post_type'      => PROMOTUR_Destinos::CPT,
 	'post_status'    => 'any',
-	'author'         => $uid,
+	'meta_query'     => array( array( 'key' => PROMOTUR_Destinos::OWNER_META, 'value' => $uid ) ), // phpcs:ignore WordPress.DB.SlowDBQuery
 	'posts_per_page' => 100,
 	'orderby'        => 'modified',
 	'order'          => 'DESC',

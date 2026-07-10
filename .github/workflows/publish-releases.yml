@@ -10,6 +10,7 @@ on:
     paths:
       - 'caaguazu-portal/**'
       - 'caaguazu-locales/**'
+      - 'caaguazu-cuentas/**'
       - 'caaguazu-theme/**'
       - '.github/workflows/publish-releases.yml'
   workflow_dispatch:
@@ -50,6 +51,7 @@ jobs:
           zip -r caaguazu-portal.zip  caaguazu-portal/  "${ZIP_EXCLUDES[@]}"
           # Artefactos de los otros componentes (sus updaters usan releases/latest/download/*.zip).
           zip -r caaguazu-locales.zip caaguazu-locales/ "${ZIP_EXCLUDES[@]}"
+          zip -r caaguazu-cuentas.zip caaguazu-cuentas/ "${ZIP_EXCLUDES[@]}"
           zip -r caaguazu-theme.zip   caaguazu-theme/   "${ZIP_EXCLUDES[@]}"
           ls -lh ./*.zip
 
@@ -63,4 +65,5 @@ jobs:
           files: |
             caaguazu-portal.zip
             caaguazu-locales.zip
+            caaguazu-cuentas.zip
             caaguazu-theme.zip

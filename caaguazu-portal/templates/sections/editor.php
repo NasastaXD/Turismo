@@ -8,10 +8,14 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 $post_id = isset( $promotur_id ) ? (int) $promotur_id : 0;
 $post    = $post_id ? get_post( $post_id ) : null;
 
-// Si edita una ficha ajena sin ser revisor/admin → bloquear.
+// Si edita una ficha ajena sin ser revisor/admin → bloquear. El dueño real
+// se resuelve por PROMOTUR_Destinos::OWNER_META, no por post_author (que en
+// toda ficha creada desde el panel apunta al usuario de servicio).
 if ( $post && PROMOTUR_Destinos::CPT === $post->post_type ) {
-	$is_owner = ( (int) $post->post_author === get_current_user_id() );
-	if ( ! $is_owner && ! current_user_can( 'promotur_review_content' ) && ! current_user_can( 'manage_options' ) ) {
+	$owner    = PROMOTUR_Destinos::owner_account_id( $post_id );
+	$mine     = caaguazu_account_id();
+	$is_owner = ( $owner > 0 && $mine > 0 && $owner === $mine );
+	if ( ! $is_owner && ! caaguazu_account_can( 'promotor', 'promotur_review_content' ) ) {
 		wp_die( esc_html__( 'No podés editar esta ficha.', 'caaguazu-portal' ), '', array( 'response' => 403 ) );
 	}
 } elseif ( $post_id ) {

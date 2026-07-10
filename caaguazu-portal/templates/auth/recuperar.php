@@ -24,8 +24,8 @@ $body = function () use ( $error, $notice ) {
 		<?php wp_nonce_field( 'promotur_recuperar', 'promotur_nonce' ); ?>
 		<input type="hidden" name="promotur_auth" value="recuperar">
 		<label class="promotur-field">
-			<span><?php esc_html_e( 'Usuario o email', 'caaguazu-portal' ); ?></span>
-			<input type="text" name="user_login" required autofocus>
+			<span><?php esc_html_e( 'Email', 'caaguazu-portal' ); ?></span>
+			<input type="email" name="user_login" required autofocus>
 		</label>
 		<button type="submit" class="promotur-btn promotur-btn--primary promotur-btn--block"><?php esc_html_e( 'Enviar enlace', 'caaguazu-portal' ); ?></button>
 	</form>

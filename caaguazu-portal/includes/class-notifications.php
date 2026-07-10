@@ -29,11 +29,11 @@ class PROMOTUR_Notifications {
 	 */
 	public function get_items() {
 		$items = array();
-		$uid   = get_current_user_id();
-		if ( ! $uid ) { return $items; }
+		$uid   = caaguazu_account_id();
+		if ( ! $uid && ! caaguazu_wp_admin_bypass() ) { return $items; }
 
 		// Para revisores: fichas que esperan revisión.
-		if ( current_user_can( 'promotur_review_content' ) ) {
+		if ( caaguazu_account_can( 'promotor', 'promotur_review_content' ) ) {
 			$pending = get_posts( array(
 				'post_type'      => 'promotur_destino',
 				'post_status'    => array( 'draft', 'pending' ),
@@ -53,16 +53,19 @@ class PROMOTUR_Notifications {
 			}
 		}
 
-		// Para autores: sus fichas que necesitan cambios.
-		$mine = get_posts( array(
+		// Para autores: sus fichas que necesitan cambios (filtra por el meta
+		// de dueño real, no por post_author — ver PROMOTUR_Destinos::OWNER_META).
+		$mine = $uid ? get_posts( array(
 			'post_type'      => 'promotur_destino',
 			'post_status'    => array( 'draft', 'pending' ),
-			'author'         => $uid,
 			'posts_per_page' => 10,
-			'meta_key'       => '_promotur_estado',
-			'meta_value'     => 'necesita_cambios',
 			'fields'         => 'ids',
-		) );
+			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery
+				'relation' => 'AND',
+				array( 'key' => PROMOTUR_Destinos::OWNER_META, 'value' => $uid ),
+				array( 'key' => '_promotur_estado', 'value' => 'necesita_cambios' ),
+			),
+		) ) : array();
 		foreach ( $mine as $pid ) {
 			$items[] = array(
 				'icon'  => 'edit',
@@ -81,7 +84,7 @@ class PROMOTUR_Notifications {
 	 * Cantidad de no leídas.
 	 */
 	public function get_unread_count() {
-		$read_at = (int) get_user_meta( get_current_user_id(), self::READ_META, true );
+		$read_at = $this->read_at();
 		$count   = 0;
 		foreach ( $this->get_items() as $item ) {
 			if ( $item['time'] > $read_at ) { $count++; }
@@ -90,10 +93,23 @@ class PROMOTUR_Notifications {
 	}
 
 	/**
+	 * Momento de la última marca de lectura de la cuenta actual (timestamp).
+	 * Vive en el metadata de la cuenta (o en usermeta de WP para el bypass
+	 * de administrador, que no tiene cuenta propia).
+	 */
+	private function read_at() {
+		$uid = caaguazu_account_id();
+		if ( $uid > 0 ) {
+			return (int) caaguazu_account_meta_get( $uid, self::READ_META, 0 );
+		}
+		return (int) get_user_meta( get_current_user_id(), self::READ_META, true );
+	}
+
+	/**
 	 * Cantidad de fichas en la cola de revisión (para el badge del sidebar).
 	 */
 	public static function review_queue_count() {
-		if ( ! current_user_can( 'promotur_review_content' ) ) { return 0; }
+		if ( ! caaguazu_account_can( 'promotor', 'promotur_review_content' ) ) { return 0; }
 		$q = new WP_Query( array(
 			'post_type'      => 'promotur_destino',
 			'post_status'    => array( 'draft', 'pending' ),
@@ -109,10 +125,15 @@ class PROMOTUR_Notifications {
 	 * admin-post: marcar todo como leído.
 	 */
 	public function handle_mark_read() {
-		if ( ! is_user_logged_in() || ! check_admin_referer( 'promotur_mark_read' ) ) {
+		if ( ( ! caaguazu_is_logged_in() && ! caaguazu_wp_admin_bypass() ) || ! check_admin_referer( 'promotur_mark_read' ) ) {
 			wp_die( esc_html__( 'No autorizado.', 'caaguazu-portal' ) );
 		}
-		update_user_meta( get_current_user_id(), self::READ_META, time() );
+		$uid = caaguazu_account_id();
+		if ( $uid > 0 ) {
+			caaguazu_account_meta_set( $uid, self::READ_META, time() );
+		} else {
+			update_user_meta( get_current_user_id(), self::READ_META, time() );
+		}
 		promotur_flash( __( 'Notificaciones marcadas como leídas.', 'caaguazu-portal' ), 'success' );
 		$back = wp_get_referer();
 		wp_safe_redirect( $back ? $back : promotur_url( 'panel' ) );

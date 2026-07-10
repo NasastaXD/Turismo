@@ -49,8 +49,12 @@ class PROMOTUR_Audit {
 		if ( is_array( $payload ) ) {
 			$payload = wp_json_encode( $payload );
 		}
+		// user_id: ID de cuenta del sistema de cuentas universal (o el ID de
+		// WordPress del administrador, cuando entra por el bypass — ambos
+		// espacios de ID conviven en esta columna de auditoría sin FK real).
+		$default_actor = function_exists( 'caaguazu_account_id' ) ? ( caaguazu_account_id() ?: get_current_user_id() ) : get_current_user_id();
 		return (bool) $wpdb->insert( self::table(), array(
-			'user_id'     => isset( $args['user_id'] ) ? (int) $args['user_id'] : ( get_current_user_id() ?: null ),
+			'user_id'     => isset( $args['user_id'] ) ? (int) $args['user_id'] : ( $default_actor ?: null ),
 			'action'      => substr( sanitize_key( $action ), 0, 80 ),
 			'entity_type' => isset( $args['entity_type'] ) ? substr( sanitize_key( $args['entity_type'] ), 0, 60 ) : null,
 			'entity_id'   => isset( $args['entity_id'] ) ? (int) $args['entity_id'] : null,

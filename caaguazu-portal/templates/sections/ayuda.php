@@ -42,7 +42,7 @@ $body = function () {
 	<h3 class="promotur-h3"><?php esc_html_e( 'Las secciones', 'caaguazu-portal' ); ?></h3>
 	<div class="promotur-grid promotur-grid--2">
 		<?php foreach ( $bloques as $b ) :
-			if ( $b[3] && ! current_user_can( $b[3] ) ) { continue; } ?>
+			if ( $b[3] && ! promotur_can( $b[3] ) ) { continue; } ?>
 			<div class="promotur-card">
 				<div class="promotur-quick" style="border:0;padding:0;margin-bottom:.4rem">
 					<?php echo promotur_icon( $b[0] ); // phpcs:ignore WordPress.Security.EscapeOutput ?>

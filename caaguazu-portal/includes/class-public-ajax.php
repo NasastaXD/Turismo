@@ -36,7 +36,7 @@ class PROMOTUR_Public_Ajax {
 	}
 
 	private function check_mod() {
-		if ( ! check_ajax_referer( 'promotur', 'nonce', false ) || ! current_user_can( 'promotur_moderate' ) ) {
+		if ( ! check_ajax_referer( 'promotur', 'nonce', false ) || ! caaguazu_account_can( 'promotor', 'promotur_moderate' ) ) {
 			wp_send_json_error( array( 'message' => __( 'No autorizado.', 'caaguazu-portal' ) ), 403 );
 		}
 	}
@@ -51,7 +51,7 @@ class PROMOTUR_Public_Ajax {
 			'author'  => wp_unslash( $_POST['author'] ?? '' ),
 			'email'   => wp_unslash( $_POST['email'] ?? '' ),
 			'content' => wp_unslash( $_POST['content'] ?? '' ),
-			'user_id' => get_current_user_id(),
+			'user_id' => 0, // visitante público — ver PROMOTUR_Resenas para cómo se guarda la identidad opcional.
 		) );
 		if ( is_wp_error( $res ) ) {
 			wp_send_json_error( array( 'message' => $res->get_error_message() ) );
@@ -80,7 +80,7 @@ class PROMOTUR_Public_Ajax {
 			wp_unslash( $_POST['content'] ?? '' ),
 			wp_unslash( $_POST['author'] ?? '' ),
 			wp_unslash( $_POST['email'] ?? '' ),
-			get_current_user_id()
+			0 // visitante público — ya no hay una sesión de WordPress que atribuirle.
 		);
 		if ( is_wp_error( $res ) ) {
 			wp_send_json_error( array( 'message' => $res->get_error_message() ) );

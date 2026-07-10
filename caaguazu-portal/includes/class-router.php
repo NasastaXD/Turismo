@@ -119,15 +119,18 @@ class PROMOTUR_Router {
 	}
 
 	/**
-	 * Guard del panel: login + capability base.
+	 * Guard del panel: sesión (cuenta propia, o admin de WP vía bypass) + capability base.
 	 */
 	private function guard_panel() {
-		if ( ! is_user_logged_in() ) {
+		// caaguazu_is_logged_in() cubre la sesión propia; los administradores
+		// de WordPress (no migrados a cuentas a propósito) entran por su
+		// login de wp-admin de siempre — ver caaguazu_wp_admin_bypass().
+		if ( ! caaguazu_is_logged_in() && ! ( function_exists( 'caaguazu_wp_admin_bypass' ) && caaguazu_wp_admin_bypass() ) ) {
 			$current = home_url( add_query_arg( array(), $GLOBALS['wp']->request ) );
 			wp_safe_redirect( promotur_url( 'login' ) . '?next=' . rawurlencode( $current ) );
 			exit;
 		}
-		if ( ! current_user_can( 'promotur_view_panel' ) ) {
+		if ( ! caaguazu_account_can( 'promotor', 'promotur_view_panel' ) ) {
 			wp_die(
 				esc_html__( 'No tenés acceso a este panel.', 'caaguazu-portal' ),
 				esc_html__( 'Acceso denegado', 'caaguazu-portal' ),

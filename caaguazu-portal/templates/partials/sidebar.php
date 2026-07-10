@@ -6,7 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 $current      = promotur_current_route(); // slug de sección actual
 $review_badge = PROMOTUR_Notifications::review_queue_count();
-$tareas_badge = class_exists( 'PROMOTUR_Tareas' ) ? PROMOTUR_Tareas::pending_count_for( get_current_user_id() ) : 0;
+$tareas_badge = class_exists( 'PROMOTUR_Tareas' ) ? PROMOTUR_Tareas::pending_count_for( caaguazu_account_id() ) : 0;
 ?>
 <aside class="promotur-sidebar" data-sidebar>
 	<a class="promotur-brand" href="<?php echo esc_url( promotur_url( 'panel' ) ); ?>">

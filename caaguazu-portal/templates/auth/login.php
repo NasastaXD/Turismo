@@ -31,8 +31,8 @@ $body = function () use ( $error, $notice, $next, $reset ) {
 		<input type="hidden" name="next" value="<?php echo esc_attr( $next ); ?>">
 
 		<label class="promotur-field">
-			<span><?php esc_html_e( 'Usuario o email', 'caaguazu-portal' ); ?></span>
-			<input type="text" name="user_login" autocomplete="username" required autofocus>
+			<span><?php esc_html_e( 'Email', 'caaguazu-portal' ); ?></span>
+			<input type="email" name="user_login" autocomplete="username" required autofocus>
 		</label>
 		<label class="promotur-field">
 			<span><?php esc_html_e( 'Contraseña', 'caaguazu-portal' ); ?></span>

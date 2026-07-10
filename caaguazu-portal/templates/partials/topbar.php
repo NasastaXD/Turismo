@@ -5,7 +5,7 @@
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-$user    = wp_get_current_user();
+$identity = promotur_current_identity();
 $notifs  = PROMOTUR_Notifications::instance();
 $items   = $notifs->get_items();
 $unread  = $notifs->get_unread_count();
@@ -68,9 +68,9 @@ $q       = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) )
 		</div>
 
 		<a class="promotur-userchip" href="<?php echo esc_url( promotur_url( 'panel/perfil' ) ); ?>">
-			<?php echo promotur_avatar( $user->ID ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+			<?php echo promotur_avatar( $identity ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 			<span class="promotur-userchip__meta">
-				<span class="promotur-userchip__name"><?php echo esc_html( $user->display_name ); ?></span>
+				<span class="promotur-userchip__name"><?php echo esc_html( $identity['display_name'] ); ?></span>
 				<span class="promotur-userchip__role"><?php echo esc_html( promotur_role_label() ); ?></span>
 			</span>
 		</a>

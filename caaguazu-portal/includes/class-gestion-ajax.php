@@ -27,7 +27,7 @@ class PROMOTUR_Gestion_Ajax {
 		if ( ! check_ajax_referer( 'promotur', 'nonce', false ) ) {
 			wp_send_json_error( array( 'message' => __( 'Sesión expirada. Recargá la página.', 'caaguazu-portal' ) ), 403 );
 		}
-		if ( $cap && ! current_user_can( $cap ) ) {
+		if ( $cap && ! caaguazu_account_can( 'promotor', $cap ) ) {
 			wp_send_json_error( array( 'message' => __( 'No tenés permiso.', 'caaguazu-portal' ) ), 403 );
 		}
 	}
@@ -54,7 +54,7 @@ class PROMOTUR_Gestion_Ajax {
 		if ( ! $id || PROMOTUR_Tareas::CPT !== get_post_type( $id ) ) {
 			wp_send_json_error( array( 'message' => __( 'Tarea inválida.', 'caaguazu-portal' ) ) );
 		}
-		PROMOTUR_Tareas::claim( $id, get_current_user_id() );
+		PROMOTUR_Tareas::claim( $id, caaguazu_account_id() );
 		wp_send_json_success( array( 'message' => __( 'Reclamaste esta tarea. ¡A producir!', 'caaguazu-portal' ), 'reload' => true ) );
 	}
 
@@ -65,7 +65,7 @@ class PROMOTUR_Gestion_Ajax {
 			wp_send_json_error( array( 'message' => __( 'Tarea inválida.', 'caaguazu-portal' ) ) );
 		}
 		// Solo el asignado o quien puede asignar.
-		if ( ! PROMOTUR_Tareas::is_assigned( $id, get_current_user_id() ) && ! current_user_can( 'promotur_assign_tasks' ) ) {
+		if ( ! PROMOTUR_Tareas::is_assigned( $id, caaguazu_account_id() ) && ! caaguazu_account_can( 'promotor', 'promotur_assign_tasks' ) ) {
 			wp_send_json_error( array( 'message' => __( 'No tenés permiso.', 'caaguazu-portal' ) ), 403 );
 		}
 		PROMOTUR_Tareas::complete( $id );

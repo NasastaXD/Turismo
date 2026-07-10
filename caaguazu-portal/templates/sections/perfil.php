@@ -4,27 +4,28 @@
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-$user = wp_get_current_user();
-$pub  = get_posts( array(
+$identity = promotur_current_identity();
+$uid      = caaguazu_account_id();
+$pub      = get_posts( array(
 	'post_type'      => PROMOTUR_Destinos::CPT,
 	'post_status'    => 'publish',
-	'author'         => $user->ID,
+	'meta_query'     => array( array( 'key' => PROMOTUR_Destinos::OWNER_META, 'value' => $uid ) ), // phpcs:ignore WordPress.DB.SlowDBQuery
 	'posts_per_page' => 50,
 ) );
 $total_views = 0;
 foreach ( $pub as $p ) { $total_views += PROMOTUR_Stats::views( $p->ID ); }
-$is_mini = in_array( 'promotur_mini', (array) $user->roles, true );
+$is_mini = ( 'promotur_mini' === promotur_user_role() );
 
 $page_title = __( 'Mi perfil', 'caaguazu-portal' );
-$body = function () use ( $user, $pub, $total_views, $is_mini ) {
+$body = function () use ( $identity, $uid, $pub, $total_views, $is_mini ) {
 	?>
 	<div class="promotur-profile">
-		<?php echo promotur_avatar( $user->ID, 'promotur-avatar--lg' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+		<?php echo promotur_avatar( $identity, 'promotur-avatar--lg' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 		<div>
-			<h2 class="promotur-h2"><?php echo esc_html( $user->display_name ); ?></h2>
+			<h2 class="promotur-h2"><?php echo esc_html( $identity['display_name'] ); ?></h2>
 			<p class="promotur-muted">
 				<?php echo esc_html( promotur_role_label() ); ?>
-				<?php if ( $is_mini ) : ?> · <span class="promotur-pill is-approved"><?php echo esc_html( PROMOTUR_Stats::level_label( $user->ID ) ); ?></span><?php endif; ?>
+				<?php if ( $is_mini ) : ?> · <span class="promotur-pill is-approved"><?php echo esc_html( PROMOTUR_Stats::level_label( $uid ) ); ?></span><?php endif; ?>
 			</p>
 		</div>
 	</div>
@@ -35,7 +36,7 @@ $body = function () use ( $user, $pub, $total_views, $is_mini ) {
 			<div class="promotur-trustbar">
 				<?php
 				$levels = PROMOTUR_Stats::levels();
-				$cur    = PROMOTUR_Stats::get_level( $user->ID );
+				$cur    = PROMOTUR_Stats::get_level( $uid );
 				$keys   = array_keys( $levels );
 				$ci     = array_search( $cur, $keys, true );
 				foreach ( $keys as $idx => $lk ) : ?>
@@ -87,9 +88,11 @@ $body = function () use ( $user, $pub, $total_views, $is_mini ) {
 		</div>
 	<?php endif; ?>
 
-	<p class="promotur-muted promotur-mt">
-		<a href="<?php echo esc_url( admin_url( 'profile.php' ) ); ?>"><?php esc_html_e( 'Editar mi perfil en WordPress →', 'caaguazu-portal' ); ?></a>
-	</p>
+	<?php if ( 0 === $uid ) : // bypass de administrador de WP: sí tiene un perfil de WordPress que editar. ?>
+		<p class="promotur-muted promotur-mt">
+			<a href="<?php echo esc_url( admin_url( 'profile.php' ) ); ?>"><?php esc_html_e( 'Editar mi perfil en WordPress →', 'caaguazu-portal' ); ?></a>
+		</p>
+	<?php endif; ?>
 	<?php
 };
 

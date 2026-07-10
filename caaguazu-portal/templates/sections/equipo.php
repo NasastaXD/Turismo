@@ -27,25 +27,25 @@ $body = function () use ( $roles, $levels ) {
 	</div>
 
 	<?php foreach ( $roles as $role_key => $def ) :
-		$users = get_users( array( 'role' => $role_key, 'number' => 200, 'orderby' => 'display_name' ) );
+		$users = promotur_team_members( $role_key );
 		if ( empty( $users ) ) { continue; }
 		$is_mini = ( 'promotur_mini' === $role_key );
 		?>
 		<h3 class="promotur-h3"><?php echo esc_html( $def['label'] ); ?> <span class="promotur-muted">(<?php echo count( $users ); ?>)</span></h3>
 		<div class="promotur-list">
 			<?php foreach ( $users as $u ) :
-				$counts = PROMOTUR_Stats::author_counts( $u->ID ); ?>
-				<div class="promotur-card promotur-mod" data-user="<?php echo esc_attr( $u->ID ); ?>">
+				$counts = PROMOTUR_Stats::author_counts( $u['id'] ); ?>
+				<div class="promotur-card promotur-mod" data-user="<?php echo esc_attr( $u['id'] ); ?>">
 					<div class="promotur-row__user">
-						<?php echo promotur_avatar( $u->ID, 'promotur-avatar--sm' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+						<?php echo promotur_avatar( $u, 'promotur-avatar--sm' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 						<span>
-							<span class="promotur-row__title"><?php echo esc_html( $u->display_name ); ?></span>
+							<span class="promotur-row__title"><?php echo esc_html( $u['display_name'] ); ?></span>
 							<span class="promotur-row__meta">
 								<?php
 								/* translators: 1: publicadas, 2: total */
 								printf( esc_html__( '%1$d publicadas · %2$d en total', 'caaguazu-portal' ), $counts['publicadas'], $counts['total'] );
 								if ( $is_mini ) {
-									echo ' · ' . esc_html( PROMOTUR_Stats::level_label( $u->ID ) );
+									echo ' · ' . esc_html( PROMOTUR_Stats::level_label( $u['id'] ) );
 								}
 								?>
 							</span>
@@ -55,7 +55,7 @@ $body = function () use ( $roles, $levels ) {
 						<div class="promotur-inline-form">
 							<span class="promotur-muted"><?php esc_html_e( 'Nivel de confianza:', 'caaguazu-portal' ); ?></span>
 							<select data-nivel-select>
-								<?php $cur = PROMOTUR_Stats::get_level( $u->ID );
+								<?php $cur = PROMOTUR_Stats::get_level( $u['id'] );
 								foreach ( $levels as $lk => $ll ) : ?>
 									<option value="<?php echo esc_attr( $lk ); ?>" <?php selected( $cur, $lk ); ?>><?php echo esc_html( $ll ); ?></option>
 								<?php endforeach; ?>

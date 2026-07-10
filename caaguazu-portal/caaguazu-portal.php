@@ -2,10 +2,11 @@
 /**
  * Plugin Name:       Caaguazú Portal — Promotores Turísticos
  * Plugin URI:        https://turismo.caaguazu.net
- * Description:       Panel autenticado tipo app (sidebar + topbar + contenido, instalable como PWA) sobre rutas propias, con flujo editorial borrador → revisión → publicación para el Portal de Promotores Turísticos. Hereda los colores del sitio vía tokens CSS.
- * Version:           1.1.3
+ * Description:       Panel autenticado tipo app (sidebar + topbar + contenido, instalable como PWA) sobre rutas propias, con flujo editorial borrador → revisión → publicación para el Portal de Promotores Turísticos. Hereda los colores del sitio vía tokens CSS. Desde 2.0.0 la identidad de los promotores corre sobre el sistema de cuentas universal (caaguazu-cuentas): ya no son usuarios de WordPress.
+ * Version:           2.0.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
+ * Requires Plugins:  caaguazu-cuentas
  * Author:            Municipalidad de Caaguazú
  * Author URI:        https://caaguazu.net
  * License:           GPL v2 or later
@@ -16,7 +17,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'PROMOTUR_VERSION', '1.1.3' );
+define( 'PROMOTUR_VERSION', '2.0.0' );
 define( 'PROMOTUR_DB_VERSION', 2 ); // se incrementa cuando cambia la estructura de datos.
 define( 'PROMOTUR_FILE', __FILE__ );
 define( 'PROMOTUR_DIR', plugin_dir_path( __FILE__ ) );
@@ -54,9 +55,61 @@ require_once PROMOTUR_DIR . 'includes/class-i18n.php';
 require_once PROMOTUR_DIR . 'includes/nav-integration.php';
 
 /**
+ * ¿Está activo el sistema de cuentas universal (caaguazu-cuentas)?
+ *
+ * Dependencia dura desde el cutover de identidad: el Portal ya no autentica
+ * con usuarios de WordPress, así que sin caaguazu-cuentas activo el panel no
+ * puede funcionar (login, capabilities y sesión dependen de su API).
+ *
+ * @return bool
+ */
+function promotur_cuentas_active() {
+	return function_exists( 'caaguazu_is_logged_in' ) && class_exists( 'Caaguazu_Cuentas_Install' );
+}
+
+/**
+ * Aviso en wp-admin si falta la dependencia dura de arriba.
+ */
+function promotur_missing_cuentas_notice() {
+	if ( promotur_cuentas_active() ) { return; }
+	echo '<div class="notice notice-error"><p>' .
+		esc_html__( 'Caaguazú Portal necesita el plugin "Caaguazú Cuentas" activo para funcionar — el login de los promotores ya no usa usuarios de WordPress. Activalo desde Plugins para que el panel vuelva a andar.', 'caaguazu-portal' ) .
+		'</p></div>';
+}
+add_action( 'admin_notices', 'promotur_missing_cuentas_notice' );
+
+/**
+ * Registra el panel "promotor" en el sistema de cuentas universal
+ * (caaguazu-cuentas). Reusa la misma definición de roles/caps de
+ * PROMOTUR_Roles — una sola fuente de verdad — para que el grant de una
+ * cuenta en este panel traiga exactamente las mismas capabilities que antes
+ * tenía el rol de WordPress equivalente.
+ */
+function promotur_register_account_panel() {
+	if ( ! promotur_cuentas_active() ) {
+		return;
+	}
+	$roles = array();
+	foreach ( PROMOTUR_Roles::roles() as $key => $def ) {
+		$roles[ $key ] = array( 'label' => $def['label'], 'caps' => $def['caps'] );
+	}
+	caaguazu_register_panel( 'promotor', array(
+		'label' => __( 'Portal de Promotores', 'caaguazu-portal' ),
+		'roles' => $roles,
+	) );
+}
+add_action( 'plugins_loaded', 'promotur_register_account_panel', 6 ); // después de caaguazu_cuentas_boot (prioridad 5).
+
+/**
  * Arranque del plugin.
  */
 function promotur_boot() {
+	if ( ! promotur_cuentas_active() ) {
+		// Sin caaguazu-cuentas no hay login/capabilities posibles: no se
+		// levanta el router/shell (evita fatal errors por funciones
+		// inexistentes) — sólo queda el aviso de wp-admin de arriba.
+		return;
+	}
 	PROMOTUR_Roles::instance();
 	PROMOTUR_Router::instance();
 	PROMOTUR_Shell::instance();
