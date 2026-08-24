@@ -64,14 +64,19 @@ function promotur_team_members( $roles = null ) {
  * URL absoluta a una ruta del portal/auth.
  *
  * El panel vive bajo /turismo/panel (no en la raíz) — las demás rutas
- * (login, registro, recuperar, salir) quedan como estaban.
+ * (registro, recuperar, salir) quedan como estaban. El identificador interno
+ * de la ruta de login sigue siendo 'login' (query var, switch de dispatch,
+ * templates); sólo el slug público cambia a /czu-login para no chocar con
+ * /wp-login.php ni con el login nativo de wp-admin.
  *
  * @param string $route ej. 'panel/equipo', 'login'
  * @return string
  */
 function promotur_url( $route = '' ) {
 	$route = ltrim( (string) $route, '/' );
-	if ( 'panel' === $route || 0 === strpos( $route, 'panel/' ) ) {
+	if ( 'login' === $route ) {
+		$route = 'czu-login';
+	} elseif ( 'panel' === $route || 0 === strpos( $route, 'panel/' ) ) {
 		$route = 'turismo/' . $route;
 	}
 	return home_url( '/' . $route );

@@ -15,7 +15,7 @@ Plugin del Portal de Promotores Turísticos de Caaguazú. Monta un panel sobre r
 instalable como PWA, con modo claro/oscuro y los colores del sitio heredados vía tokens CSS.
 
 **Fase 0 — Framework del panel**
-* Enrutador propio (rewrite rules) con guards: `/login`, `/registro`, `/recuperar`, `/recuperar/restablecer`, `/salir`, invitación `/i/{token}`, PWA (`/promotur-manifest.webmanifest`, `/promotur-sw.js`, `/promotur-icon-{n}.png`, `/promotur-offline`) y panel `/panel/...`.
+* Enrutador propio (rewrite rules) con guards: `/czu-login`, `/registro`, `/recuperar`, `/recuperar/restablecer`, `/salir`, invitación `/i/{token}`, PWA (`/promotur-manifest.webmanifest`, `/promotur-sw.js`, `/promotur-icon-{n}.png`, `/promotur-offline`) y panel `/panel/...`.
 * Shell único + contrato de página (`$page_title` + `$body` + `include shell.php`).
 * Sidebar y topbar dinámicos, gateados por capability (no por rol).
 * Tokens CSS que heredan del theme con fallback; modo claro/oscuro persistente.
@@ -38,7 +38,7 @@ instalable como PWA, con modo claro/oscuro y los colores del sitio heredados ví
 
 1. Subir `caaguazu-portal` a `/wp-content/plugins/` y activar.
 2. Se crean los roles y se vacían (flush) las rewrite rules automáticamente.
-3. Entrar a `/login`, crear una cuenta o iniciar sesión, e ir a `/panel`.
+3. Entrar a `/czu-login`, crear una cuenta o iniciar sesión, e ir a `/panel`.
 
 Convive con el plugin `caaguazu-locales` sin colisiones (prefijos distintos).
 
