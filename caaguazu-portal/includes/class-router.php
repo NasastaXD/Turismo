@@ -51,7 +51,9 @@ class PROMOTUR_Router {
 		add_rewrite_rule( '^promotur-offline/?$',             'index.php?promotur_route=pwa-offline', 'top' );
 
 		// Auth (restablecer antes que recuperar).
-		add_rewrite_rule( '^login/?$',                 'index.php?promotur_route=login', 'top' );
+		// El slug es "czu-login" (no "login" a secas) para no chocar con
+		// /wp-login.php ni con el login nativo de wp-admin.
+		add_rewrite_rule( '^czu-login/?$',             'index.php?promotur_route=login', 'top' );
 		add_rewrite_rule( '^registro/?$',              'index.php?promotur_route=registro', 'top' );
 		add_rewrite_rule( '^recuperar/restablecer/?$', 'index.php?promotur_route=restablecer', 'top' );
 		add_rewrite_rule( '^recuperar/?$',             'index.php?promotur_route=recuperar', 'top' );

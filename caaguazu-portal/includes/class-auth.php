@@ -85,7 +85,7 @@ class PROMOTUR_Auth {
 	 * @param string $route login|registro|recuperar|restablecer
 	 */
 	public function render( $route ) {
-		// Ya logueado: a /login o /registro no tiene sentido entrar.
+		// Ya logueado: a /czu-login o /registro no tiene sentido entrar.
 		if ( caaguazu_is_logged_in() && in_array( $route, array( 'login', 'registro' ), true ) ) {
 			wp_safe_redirect( $this->safe_next() );
 			exit;
