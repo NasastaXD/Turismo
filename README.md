@@ -9,6 +9,7 @@ El repositorio contiene dos piezas que funcionan juntas sobre WordPress:
 | [`caaguazu-theme/`](caaguazu-theme) | Tema clásico de WordPress (conversión del sitio estático original, 27 páginas pre-cargadas). |
 | [`caaguazu-locales/`](caaguazu-locales) | Plugin con locales, reservas por WhatsApp, mapa editable, reseñas con cuentas, panel de dueños y autoactualización. |
 | [`caaguazu-cuentas/`](caaguazu-cuentas) | Sistema de cuentas universal, propio y separado de los usuarios de WordPress (para maximizar seguridad): identidad email+contraseña, sesión propia firmada y permisos por panel. Base para el Portal de Promotores y futuros paneles — el Portal ya corre enteramente sobre esta cuenta (login, permisos, autoría de fichas). |
+| [`caaguazu-sso-cead/`](caaguazu-sso-cead) | Acceso de un clic desde el panel del CEAD (curso de Servicios Turísticos) al Portal de Promotores: el CEAD afirma quién es la persona, este plugin decide la cuenta/rol acá. Orquesta sobre `caaguazu-cuentas` y `caaguazu-portal`, sin tocar su código. |
 | [`updates/`](updates) | Manifiestos JSON que alimentan la autoactualización del tema y del plugin. |
 
 > `Yeeye.zip` es el empaquetado original del tema; el contenido vive descomprimido en `caaguazu-theme/`.
