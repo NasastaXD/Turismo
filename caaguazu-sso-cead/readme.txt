@@ -18,6 +18,20 @@ servidor); este plugin decide qué cuenta y qué permisos le corresponden en el
 Portal. No crea usuarios de WordPress ni toca su cookie — todo corre sobre
 `caaguazu-cuentas`, el sistema de cuentas universal del ecosistema.
 
+**IMPORTANTE — este plugin va en caaguazu.net, NO en el sitio del CEAD.**
+
+La integración tiene dos mitades, en dos WordPress distintos, que no comparten
+código: sólo el secreto compartido y el contrato HTTP.
+
+| Dónde | Qué corre ahí | Qué hace |
+|---|---|---|
+| **caaguazu.net** | **este plugin** (`caaguazu-sso-cead`) | Recibe `/acceso-cead?code=`, canjea el código contra el CEAD, resuelve la cuenta, aplica el rol y abre sesión. |
+| **sitio del CEAD** | su propio plugin (`cead-acad`) | Marca el curso participante, genera el código, expone `/wp-json/cead-sso/v1/redeem` y pinta el botón "Ir al portal". |
+
+Por eso este plugin declara `caaguazu-cuentas` y `caaguazu-portal` como
+dependencias: los tres viven en caaguazu.net. La mitad del CEAD **no depende de
+ninguno de ellos** — es WordPress pelado más el endpoint del contrato.
+
 **Reglas de negocio, ya decididas para esta integración:**
 
 * Un email que ya tiene cuenta en el portal, pero sin vincular a un `cead_uid`
@@ -32,14 +46,24 @@ Portal. No crea usuarios de WordPress ni toca su cookie — todo corre sobre
 
 == Instalación ==
 
-1. Requiere `caaguazu-cuentas` y `caaguazu-portal` activos.
-2. Subir `caaguazu-sso-cead` a `/wp-content/plugins/` y activar.
-3. Definir en `wp-config.php` (nunca como opción editable desde la base):
+Todo esto es **en caaguazu.net** (ver el cuadro de arriba: en el sitio del CEAD
+no se instala nada de este plugin).
+
+1. Requiere `caaguazu-cuentas` y `caaguazu-portal` activos en ese mismo sitio.
+2. Subir `caaguazu-sso-cead` a `/wp-content/plugins/` de caaguazu.net y activar.
+3. Definir en el `wp-config.php` de caaguazu.net (nunca como opción editable
+   desde la base), antes de la línea `/* That's all, stop editing! */`:
 
    ```php
-   define( 'CEAD_TUR_SSO_SECRET', '…64 hex, coordinado con el CEAD…' );
+   define( 'CEAD_TUR_SSO_SECRET', '…64 hex; generar con: openssl rand -hex 32…' );
    define( 'CEAD_TUR_SSO_URL', 'https://<sitio-del-cead>/wp-json/cead-sso/v1/redeem' );
    ```
+
+   El **secreto va idéntico en los dos sitios** (un lado firma, el otro
+   verifica). La **URL es direccional**: acá se guarda la del CEAD; el CEAD, a
+   su vez, guarda `https://caaguazu.net/acceso-cead` para armar su botón.
+   `CEAD_TUR_SSO_URL` no se define en el sitio del CEAD — ese sitio *sirve* ese
+   endpoint, no se lo llama a sí mismo.
 
 4. Ir a **Ajustes → Enlaces permanentes** y guardar (activa la rewrite rule
    de `/acceso-cead`).
