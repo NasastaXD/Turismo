@@ -114,13 +114,20 @@ function czuapi_register_routes() {
 }
 
 /**
- * Migración de tablas al detectar cambio de versión (sin re-activar).
+ * Migración al detectar cambio de versión (sin re-activar).
+ *
+ * Refresca además las rewrite rules: este plugin registra tres CPTs propios
+ * (evento, artículo, recorrido) con sus slugs, y en un upgrade —a diferencia de
+ * una activación— nadie las vuelve a generar. En admin_init y no en
+ * plugins_loaded, que corre en cada visita pública: mismo criterio que
+ * caaguazu-portal.
  */
 function czuapi_maybe_upgrade() {
 	if ( get_option( 'czuapi_version' ) === CZUAPI_VERSION ) {
 		return;
 	}
 	CZUAPI_Install::create_tables();
+	flush_rewrite_rules();
 	update_option( 'czuapi_version', CZUAPI_VERSION );
 }
 add_action( 'admin_init', 'czuapi_maybe_upgrade' );
