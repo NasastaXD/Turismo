@@ -133,6 +133,25 @@ class PROMOTUR_Destinos {
 					'_promotur_horario'   => array( 'label' => __( 'Horario y mejor momento', 'caaguazu-portal' ), 'type' => 'text', 'req' => true ),
 					'_promotur_temporada' => array( 'label' => __( 'Temporada ideal / cuándo evitar', 'caaguazu-portal' ), 'type' => 'text', 'req' => false ),
 					'_promotur_costo'     => array( 'label' => __( 'Costo / entrada', 'caaguazu-portal' ), 'type' => 'text', 'req' => true ),
+					// Rango de precio como número, ADEMÁS del texto libre de
+					// arriba y no en su reemplazo: la app necesita filtrar por
+					// precio y pintar el indicador de la tarjeta, y eso no se
+					// puede hacer interpretando frases escritas por distintos
+					// promotores. El texto sigue diciendo lo que un número no
+					// ("entrada libre, estacionamiento 5.000 Gs").
+					'_promotur_rango_precio' => array(
+						'label'   => __( 'Rango de precio', 'caaguazu-portal' ),
+						'type'    => 'select',
+						'req'     => false,
+						'options' => array(
+							''  => __( 'Sin especificar', 'caaguazu-portal' ),
+							'0' => __( 'Gratis', 'caaguazu-portal' ),
+							'1' => __( '$ — Muy barato', 'caaguazu-portal' ),
+							'2' => __( '$$ — Barato', 'caaguazu-portal' ),
+							'3' => __( '$$$ — Intermedio', 'caaguazu-portal' ),
+							'4' => __( '$$$$ — Caro', 'caaguazu-portal' ),
+						),
+					),
 					'_promotur_servicios' => array( 'label' => __( 'Servicios (baños, comida, sombra…)', 'caaguazu-portal' ), 'type' => 'text', 'req' => false ),
 					'_promotur_duracion'  => array( 'label' => __( 'Duración sugerida', 'caaguazu-portal' ), 'type' => 'text', 'req' => false ),
 					'_promotur_contacto'  => array( 'label' => __( 'Contacto del lugar', 'caaguazu-portal' ), 'type' => 'text', 'req' => false ),
