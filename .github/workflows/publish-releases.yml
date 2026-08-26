@@ -12,6 +12,7 @@ on:
       - 'caaguazu-locales/**'
       - 'caaguazu-cuentas/**'
       - 'caaguazu-sso-cead/**'
+      - 'caaguazu-app-api/**'
       - 'caaguazu-theme/**'
       - '.github/workflows/publish-releases.yml'
   workflow_dispatch:
@@ -54,6 +55,7 @@ jobs:
           zip -r caaguazu-locales.zip caaguazu-locales/ "${ZIP_EXCLUDES[@]}"
           zip -r caaguazu-cuentas.zip caaguazu-cuentas/ "${ZIP_EXCLUDES[@]}"
           zip -r caaguazu-sso-cead.zip caaguazu-sso-cead/ "${ZIP_EXCLUDES[@]}"
+          zip -r caaguazu-app-api.zip  caaguazu-app-api/  "${ZIP_EXCLUDES[@]}"
           zip -r caaguazu-theme.zip   caaguazu-theme/   "${ZIP_EXCLUDES[@]}"
           ls -lh ./*.zip
 
@@ -69,4 +71,5 @@ jobs:
             caaguazu-locales.zip
             caaguazu-cuentas.zip
             caaguazu-sso-cead.zip
+            caaguazu-app-api.zip
             caaguazu-theme.zip
